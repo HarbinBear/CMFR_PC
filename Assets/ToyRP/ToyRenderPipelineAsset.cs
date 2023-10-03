@@ -22,9 +22,8 @@ namespace Framework.CMFR
 
         public bool CMFR_On;
         public Material CMFR_Mat;
+        public Material CMFR_Depth_Mat;
         
-        public RenderTexture testG;
-        public RenderTexture testG_CMFR;
         protected override RenderPipeline CreatePipeline()
         {
             ToyRenderPipeline rp = new ToyRenderPipeline();
@@ -37,8 +36,8 @@ namespace Framework.CMFR
             rp.instanceDatas = instanceDatas;
             rp.CMFR_On = CMFR_On;
             rp.CMFR_Mat = CMFR_Mat;
-            rp.testG = testG;
-            rp.testG_CMFR = testG_CMFR;
+            rp.CMFR_Depth_Mat = CMFR_Depth_Mat;
+
             return rp;
         }
     }

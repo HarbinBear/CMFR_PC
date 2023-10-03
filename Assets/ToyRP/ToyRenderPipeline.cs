@@ -26,10 +26,11 @@ namespace Framework.CMFR
         
         RenderTexture _gdepth; // depth attachment
         RenderTexture _gdepth_CMFR; // depth attachment
+        private RenderTexture tempDepthRT;
 
         public RenderTexture GDepth
         {
-            get { return CMFR_On ? _gdepth_CMFR : _gdepth; }
+            get { return CMFR_On ? tempDepthRT : _gdepth; }
         }
 
         RenderTexture[] _gbuffers = new RenderTexture[4]; // color attachments
@@ -57,6 +58,7 @@ namespace Framework.CMFR
         }
 
         public Material CMFR_Mat;
+        public Material CMFR_Depth_Mat;
 
         RenderTexture lightPassTex; // 存储 light pass 的结果
         RenderTexture hizBuffer; // hi-z buffer
@@ -133,6 +135,9 @@ namespace Framework.CMFR
             
             lightPassTex = new RenderTexture(Screen.width, Screen.height, 0, RenderTextureFormat.ARGBFloat,
                 RenderTextureReadWrite.Linear);
+            
+            tempDepthRT =
+                new RenderTexture(_gdepth_CMFR.width, _gdepth_CMFR.height, 0, RenderTextureFormat.RFloat);
 
             // Hi-z buffer
             int hSize = Mathf.NextPowerOfTwo(Mathf.Max(Screen.width, Screen.height)); // 大小必须是 2 的次幂
@@ -219,12 +224,8 @@ namespace Framework.CMFR
             ShadowCastingPass(context, camera);
 
             GbufferPass(context, camera);
-            
-
 
             InstanceDrawPass(context, Camera.main);
-            
-            CMFRPass(context , camera );
             
             // only generate for main camera
             if (!isEditor)
@@ -232,6 +233,8 @@ namespace Framework.CMFR
                 HizPass(context, camera);
                 vpMatrixPrev = vpMatrix;
             }
+            
+            CMFRPass(context , camera );
             
             ShadowMappingPass(context, camera);
             
@@ -244,7 +247,7 @@ namespace Framework.CMFR
             // ------------------------- Pass end -------------------------- //
 
             // skybox and Gizmos
-            // context.DrawSkybox(camera);
+            context.DrawSkybox(camera);
             if (isEditor)
             {
                 context.DrawGizmos(camera, GizmoSubset.PreImageEffects);
@@ -339,7 +342,7 @@ namespace Framework.CMFR
 
             // 清屏
             cmd.SetRenderTarget(_gbufferID, _gdepthID);
-            // cmd.ClearRenderTarget(true, true, Color.clear);
+            cmd.ClearRenderTarget(true, true, Color.clear);
             context.ExecuteCommandBuffer(cmd);
             cmd.Clear();
 
@@ -368,19 +371,13 @@ namespace Framework.CMFR
             CommandBuffer cmd = new CommandBuffer();
             cmd.name = "CMFR";
 
-            CMFR_Mat.SetFloat("_eyeX", RenderSys.GetModel<ICMFRModel>().eyeX );
-            CMFR_Mat.SetFloat("_eyeY", RenderSys.GetModel<ICMFRModel>().eyeY);
+            SetCMFRMatParams( CMFR_Depth_Mat );
+            SetCMFRMatParams( CMFR_Mat );
 
-            CMFR_Mat.SetFloat("_scaleRatio", RenderSys.GetModel<ICMFRModel>().scaleRatio);
-            CMFR_Mat.SetFloat("_fx", RenderSys.GetModel<ICMFRModel>().fx);
-            CMFR_Mat.SetFloat("_fy", RenderSys.GetModel<ICMFRModel>().fy);
-            CMFR_Mat.SetInt("_iApplyRFRMap1", RenderSys.GetModel<ICMFRModel>().iApplyRFRMap1);
 
-            CMFR_Mat.SetFloat("_SquelchedGridMappingBeta", RenderSys.GetModel<ICMFRModel>().squelchedGridMappingBeta);
-            CMFR_Mat.SetInt("_MappingStrategy",2 );
-            CMFR_Mat.SetInt("_DebugMode", (int)RenderSys.GetModel<ICMFRModel>().debugMode);
 
-            cmd.Blit(_gdepth, _gdepth_CMFR, CMFR_Mat);
+            cmd.Blit(_gdepth, tempDepthRT, CMFR_Depth_Mat);
+            cmd.Blit( tempDepthRT , _gdepth_CMFR );
             for (int i = 0; i < 4; i++)
             {
                 cmd.Blit(_gbuffers[i], _gbuffers_CMFR[i], CMFR_Mat);
@@ -393,6 +390,21 @@ namespace Framework.CMFR
 
             // Game gameComp = GameObject.Find("Game").GetComponent<Game>();
             // gameComp.rt = _gbuffers[0];
+        }
+
+        void SetCMFRMatParams(Material mat)
+        {
+            mat.SetFloat("_eyeX", RenderSys.GetModel<ICMFRModel>().eyeX );
+            mat.SetFloat("_eyeY", RenderSys.GetModel<ICMFRModel>().eyeY);
+
+            mat.SetFloat("_scaleRatio", RenderSys.GetModel<ICMFRModel>().scaleRatio);
+            mat.SetFloat("_fx", RenderSys.GetModel<ICMFRModel>().fx);
+            mat.SetFloat("_fy", RenderSys.GetModel<ICMFRModel>().fy);
+            mat.SetInt("_iApplyRFRMap1", RenderSys.GetModel<ICMFRModel>().iApplyRFRMap1);
+
+            mat.SetFloat("_SquelchedGridMappingBeta", RenderSys.GetModel<ICMFRModel>().squelchedGridMappingBeta);
+            mat.SetInt("_MappingStrategy",2 );
+            mat.SetInt("_DebugMode", (int)RenderSys.GetModel<ICMFRModel>().debugMode);
         }
 
 
@@ -497,7 +509,7 @@ namespace Framework.CMFR
 
             // 生成 mipmap
             Material mat = new Material(Shader.Find("ToyRP/hizBlit"));
-            cmd.Blit(GDepth, mips[0]);
+            cmd.Blit(_gdepth, mips[0]);
             for (int i = 1; i < mips.Length; i++)
             {
                 cmd.Blit(mips[i - 1], mips[i], mat);

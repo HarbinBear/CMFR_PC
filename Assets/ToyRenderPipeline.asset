@@ -43,5 +43,4 @@ MonoBehaviour:
   - {fileID: 11400000, guid: eb06d6848ae2c6748bd72265961df117, type: 2}
   CMFR_On: 1
   CMFR_Mat: {fileID: 2100000, guid: 9a117d863cfac0f46bc390729bcfebe4, type: 2}
-  testG: {fileID: 8400000, guid: 3ca2285034668b94db8e4797ea8ac365, type: 2}
-  testG_CMFR: {fileID: 8400000, guid: aa73fd36b9933ed409990b351a80d0a8, type: 2}
+  CMFR_Depth_Mat: {fileID: 2100000, guid: 1b7c76de6fca6914bb5f4f779ca08cab, type: 2}
