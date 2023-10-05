@@ -224,8 +224,8 @@ Shader "CMFR/CMFR_Depth_Pass"
 				if( _DebugMode == 0 )
 				{
 
-					if( u < 0.0 || u > 1.0 ){ return fixed4(1,0,0,1); }	
-					if( v < 0.0 || v > 1.0 ){ return fixed4(1,0,0,1); }
+					if( u < 0.0 || u > 1.0 ){ return fixed4(0,0,0,0); }	
+					if( v < 0.0 || v > 1.0 ){ return fixed4(0,0,0,0); }
 					
 					u = max( 0 , u );
 					u = min( 1 , u );

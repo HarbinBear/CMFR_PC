@@ -30,10 +30,12 @@
         BindableProperty<float> eyeX { get;  }
         BindableProperty<float> eyeY { get;  }
         BindableProperty<float> scaleRatio { get;  }
+        BindableProperty<float> validPercent { get;  }
         BindableProperty<float> sampleDensityWithNoise { get;  }
         BindableProperty<float> squelchedGridMappingBeta { get;  }
-        BindableProperty<MappingStrategy> mappingStrategy { get;  }
+        BindableProperty<int> mappingStrategy { get;  }
         BindableProperty<int> iApplyRFRMap1 { get;  }
+        BindableProperty<int> iApplyRFRMap2 { get;  }
         BindableProperty<int> debugMode { get;  }
 
         
@@ -76,7 +78,15 @@
         {
             Value = 1
         };
+        public BindableProperty<float> validPercent { get; } = new BindableProperty<float>()
+        {
+            Value = 0.78f
+        };
         public BindableProperty<int> iApplyRFRMap1 { get; } = new BindableProperty<int>()
+        {
+            Value = 1
+        };        
+        public BindableProperty<int> iApplyRFRMap2 { get; } = new BindableProperty<int>()
         {
             Value = 1
         };
@@ -84,9 +94,9 @@
         {
             Value = 0
         };
-        public BindableProperty<MappingStrategy> mappingStrategy { get; } = new BindableProperty<MappingStrategy>()
+        public BindableProperty<int> mappingStrategy { get; } = new BindableProperty<int>()
         {
-            Value = MappingStrategy.Squelched_Grid_Mapping
+            Value = 4
         };
         
         protected override void OnInit()

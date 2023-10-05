@@ -1,4 +1,4 @@
-Shader "CMFR/Inv_CMFR_Pass"
+Shader "CMFR/Inv_CMFR_Depth_Pass"
 {
 	Properties
 	{
@@ -70,7 +70,7 @@ Shader "CMFR/Inv_CMFR_Pass"
 			fixed4 frag(v2f i) : SV_Target
 			{
 				if (_iApplyRFRMap2 < 0.5)
-					return tex2D(_MidTex, i.uv);
+					return tex2D(_MidTex, i.uv).r;
 
 				float2 cursorPos = float2(_eyeX, _eyeY); //0-1 -> -1,1 (0,0)
 				float2 tc = (i.uv - cursorPos);
@@ -362,11 +362,11 @@ Shader "CMFR/Inv_CMFR_Pass"
 						density = 1 / ( ( abs(s1) + abs(s2) )  );
 						
 					}
-					return fixed4( density ,density,density ,1);
+					return density;
 				}
 
 				// return fixed4(0,1,0,1);
-				return col;
+				return col.r;
 			}
 		ENDCG
 		}

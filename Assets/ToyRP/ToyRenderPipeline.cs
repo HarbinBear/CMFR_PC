@@ -14,8 +14,6 @@ namespace Framework.CMFR
 
     public class ToyRenderPipeline : RenderPipeline
     {
-        public RenderTexture testG;
-        public RenderTexture testG_CMFR;
 
         private IRenderSystem _renderSys;
         public IRenderSystem RenderSys
@@ -26,11 +24,11 @@ namespace Framework.CMFR
         
         RenderTexture _gdepth; // depth attachment
         RenderTexture _gdepth_CMFR; // depth attachment
-        private RenderTexture tempDepthRT;
+        RenderTexture tempDepthRT2;
 
         public RenderTexture GDepth
         {
-            get { return CMFR_On ? tempDepthRT : _gdepth; }
+            get { return CMFR_On ? _gdepth_CMFR : _gdepth; }
         }
 
         RenderTexture[] _gbuffers = new RenderTexture[4]; // color attachments
@@ -59,8 +57,11 @@ namespace Framework.CMFR
 
         public Material CMFR_Mat;
         public Material CMFR_Depth_Mat;
+        public Material Inv_CMFR_Mat;
+        public Material Inv_CMFR_Depth_Mat;
 
         RenderTexture lightPassTex; // 存储 light pass 的结果
+        RenderTexture InvCMFRTex; // 存储 light pass 的结果
         RenderTexture hizBuffer; // hi-z buffer
 
         Matrix4x4 vpMatrix;
@@ -122,7 +123,7 @@ namespace Framework.CMFR
             _gbuffers[3] = new RenderTexture(Screen.width, Screen.height, 0, RenderTextureFormat.ARGBFloat,
                 RenderTextureReadWrite.Linear);
             
-            _gdepth_CMFR = new RenderTexture(Screen.width, Screen.height, 24, RenderTextureFormat.Depth,
+            _gdepth_CMFR = new RenderTexture(Screen.width, Screen.height, 0, RenderTextureFormat.RFloat,
                 RenderTextureReadWrite.Linear);
             _gbuffers_CMFR[0] = new RenderTexture(Screen.width, Screen.height, 0, RenderTextureFormat.ARGB32,
                 RenderTextureReadWrite.Linear);
@@ -135,8 +136,11 @@ namespace Framework.CMFR
             
             lightPassTex = new RenderTexture(Screen.width, Screen.height, 0, RenderTextureFormat.ARGBFloat,
                 RenderTextureReadWrite.Linear);
+            InvCMFRTex = new RenderTexture(Screen.width, Screen.height, 0, RenderTextureFormat.ARGBFloat,
+                RenderTextureReadWrite.Linear);
             
-            tempDepthRT =
+
+            tempDepthRT2 =
                 new RenderTexture(_gdepth_CMFR.width, _gdepth_CMFR.height, 0, RenderTextureFormat.RFloat);
 
             // Hi-z buffer
@@ -234,16 +238,16 @@ namespace Framework.CMFR
                 vpMatrixPrev = vpMatrix;
             }
             
-            CMFRPass(context , camera );
+            if( CMFR_On ) CMFRPass(context , camera );
             
             ShadowMappingPass(context, camera);
             
             LightPass(context, camera);
+            
+            if( CMFR_On ) InvCMFRPass( context ,camera);
 
-            //FinalPass(context, camera);
-
-            //
-
+            FinalPass(context, camera);
+            
             // ------------------------- Pass end -------------------------- //
 
             // skybox and Gizmos
@@ -376,10 +380,10 @@ namespace Framework.CMFR
 
 
 
-            cmd.Blit(_gdepth, tempDepthRT, CMFR_Depth_Mat);
-            cmd.Blit( tempDepthRT , _gdepth_CMFR );
+            cmd.Blit(_gdepth, _gdepth_CMFR, CMFR_Depth_Mat);
             for (int i = 0; i < 4; i++)
             {
+                // _gbuffers[i].filterMode = FilterMode.Point;
                 cmd.Blit(_gbuffers[i], _gbuffers_CMFR[i], CMFR_Mat);
             }
             
@@ -388,23 +392,45 @@ namespace Framework.CMFR
 
             Profiler.EndSample();
 
-            // Game gameComp = GameObject.Find("Game").GetComponent<Game>();
-            // gameComp.rt = _gbuffers[0];
         }
 
-        void SetCMFRMatParams(Material mat)
+        void SetCMFRMatParams(Material mat )
         {
             mat.SetFloat("_eyeX", RenderSys.GetModel<ICMFRModel>().eyeX );
             mat.SetFloat("_eyeY", RenderSys.GetModel<ICMFRModel>().eyeY);
-
             mat.SetFloat("_scaleRatio", RenderSys.GetModel<ICMFRModel>().scaleRatio);
             mat.SetFloat("_fx", RenderSys.GetModel<ICMFRModel>().fx);
             mat.SetFloat("_fy", RenderSys.GetModel<ICMFRModel>().fy);
-            mat.SetInt("_iApplyRFRMap1", RenderSys.GetModel<ICMFRModel>().iApplyRFRMap1);
-
             mat.SetFloat("_SquelchedGridMappingBeta", RenderSys.GetModel<ICMFRModel>().squelchedGridMappingBeta);
-            mat.SetInt("_MappingStrategy",2 );
+            mat.SetInt("_MappingStrategy",RenderSys.GetModel<ICMFRModel>().mappingStrategy );
             mat.SetInt("_DebugMode", (int)RenderSys.GetModel<ICMFRModel>().debugMode);
+            
+            if (mat == Inv_CMFR_Mat)
+            {
+                mat.SetTexture("_MidTex" , lightPassTex );
+                mat.SetInt("_iApplyRFRMap2", RenderSys.GetModel<ICMFRModel>().iApplyRFRMap1);
+                mat.SetFloat("_bSampleDensityWithNoise", RenderSys.GetModel<ICMFRModel>().sampleDensityWithNoise);
+                mat.SetFloat("_validPercent" , RenderSys.GetModel<ICMFRModel>().validPercent);
+            }
+
+            if (mat == CMFR_Mat)
+            {
+                mat.SetInt("_iApplyRFRMap1", RenderSys.GetModel<ICMFRModel>().iApplyRFRMap1);
+            }
+
+            if (mat == CMFR_Depth_Mat)
+            {
+                mat.SetInt("_iApplyRFRMap1", RenderSys.GetModel<ICMFRModel>().iApplyRFRMap1);
+
+            }
+
+            if (mat == Inv_CMFR_Depth_Mat)
+            {
+                mat.SetTexture("_MidTex" , _gdepth_CMFR );
+                mat.SetInt("_iApplyRFRMap2", RenderSys.GetModel<ICMFRModel>().iApplyRFRMap1);
+                mat.SetFloat("_bSampleDensityWithNoise", RenderSys.GetModel<ICMFRModel>().sampleDensityWithNoise);
+                mat.SetFloat("_validPercent" , RenderSys.GetModel<ICMFRModel>().validPercent);
+            }
         }
 
 
@@ -444,17 +470,41 @@ namespace Framework.CMFR
         // 光照 Pass : 计算 PBR 光照并且存储到 lightPassTex 纹理
         void LightPass(ScriptableRenderContext context, Camera camera)
         {
-            // 使用 Blit
+            // 使用 Blit  
             CommandBuffer cmd = new CommandBuffer();
             cmd.name = "lightpass";
 
             Material mat = new Material(Shader.Find("ToyRP/lightpass"));
-            cmd.Blit(GBufferID[0], BuiltinRenderTextureType.CameraTarget, mat);
+            cmd.Blit(GBufferID[0], lightPassTex, mat);
             context.ExecuteCommandBuffer(cmd);
 
             context.Submit();
         }
 
+
+
+        void InvCMFRPass(ScriptableRenderContext context, Camera camera)
+        {
+            // Debug.Log("[ToyRenderPipeline] InvCMFRPass");
+            if (RenderSys == null) return;
+            Profiler.BeginSample("InvCMFR");
+            CommandBuffer cmd = new CommandBuffer();
+            cmd.name = "InvCMFR";
+
+            SetCMFRMatParams( Inv_CMFR_Mat );
+            cmd.Blit(null, InvCMFRTex, Inv_CMFR_Mat);
+            SetCMFRMatParams( Inv_CMFR_Depth_Mat );
+            cmd.Blit(null,tempDepthRT2 , Inv_CMFR_Depth_Mat );
+            cmd.Blit(tempDepthRT2, _gdepth_CMFR);
+
+            context.ExecuteCommandBuffer(cmd);
+            context.Submit();
+
+            Profiler.EndSample();
+
+        }
+        
+        
         // 后处理和最终合成 Pass
         void FinalPass(ScriptableRenderContext context, Camera camera)
         {
@@ -462,7 +512,15 @@ namespace Framework.CMFR
             cmd.name = "finalpass";
 
             Material mat = new Material(Shader.Find("ToyRP/finalpass"));
-            cmd.Blit(lightPassTex, BuiltinRenderTextureType.CameraTarget, mat);
+            if (CMFR_On)
+            {
+                cmd.Blit(InvCMFRTex, BuiltinRenderTextureType.CameraTarget, mat);
+            }
+            else
+            {
+                cmd.Blit(lightPassTex, BuiltinRenderTextureType.CameraTarget, mat);
+                
+            }
             context.ExecuteCommandBuffer(cmd);
             context.Submit();
         }

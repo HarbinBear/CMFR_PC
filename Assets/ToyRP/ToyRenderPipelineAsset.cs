@@ -23,6 +23,9 @@ namespace Framework.CMFR
         public bool CMFR_On;
         public Material CMFR_Mat;
         public Material CMFR_Depth_Mat;
+        public Material Inv_CMFR_Mat;
+        public Material Inv_CMFR_Depth_Mat;
+
         
         protected override RenderPipeline CreatePipeline()
         {
@@ -37,6 +40,8 @@ namespace Framework.CMFR
             rp.CMFR_On = CMFR_On;
             rp.CMFR_Mat = CMFR_Mat;
             rp.CMFR_Depth_Mat = CMFR_Depth_Mat;
+            rp.Inv_CMFR_Mat = Inv_CMFR_Mat;
+            rp.Inv_CMFR_Depth_Mat = Inv_CMFR_Depth_Mat;
 
             return rp;
         }
