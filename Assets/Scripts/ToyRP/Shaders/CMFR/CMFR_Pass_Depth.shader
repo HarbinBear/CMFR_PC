@@ -1,4 +1,4 @@
-Shader "CMFR/CMFR_Pass"
+Shader "CMFR/CMFR_Depth_Pass"
 {
 	Properties
 	{
@@ -24,7 +24,7 @@ Shader "CMFR/CMFR_Pass"
 			#pragma fragment frag
 
 			#include "UnityCG.cginc"
-			#include "Assets/ToyRP/Shaders/globaluniform.cginc"
+			#include "Assets/Scripts/ToyRP/Shaders/globaluniform.cginc"
 
 
 			struct appdata
@@ -62,8 +62,9 @@ Shader "CMFR/CMFR_Pass"
 
 			fixed4 frag(v2f i) : SV_Target
 			{
+				// return 1;
 				// return tex2D( _GT1 , i.uv );
-				// return tex2D( _MainTex , i.uv );
+				// return tex2D( _MainTex , i.uv ).r;
 
 				if (_iApplyRFRMap1 < 0.5)
 					return tex2D(_MainTex, i.uv);
@@ -107,7 +108,7 @@ Shader "CMFR/CMFR_Pass"
 				}
 
 				float2 pq = (float2(x, y)); //0,1 --> 0-1
-				fixed4 col = tex2D(_MainTex, pq);
+				fixed col = tex2D(_MainTex, pq).r;
 
 
 				float u,v;
@@ -243,22 +244,12 @@ Shader "CMFR/CMFR_Pass"
 				{
 					if( _MappingStrategy > 0 )
 					{
-						return tex2D(_MainTex, fixed2( u , v ) );
+						float r = tex2D(_MainTex, fixed2( u , v ) ).r ;
+						return r ;
 					}
 					else if (_MappingStrategy == 0 )
 					{
 						return col;
-					}
-				}
-				else if( _DebugMode == 1 )
-				{
-					if( _MappingStrategy > 0 )
-					{
-						return fixed4( u , v , 0 , 1 );
-					}
-					else if( _MappingStrategy == 0 )
-					{
-						return fixed4( pq , 0 , 1 );
 					}
 				}
 
