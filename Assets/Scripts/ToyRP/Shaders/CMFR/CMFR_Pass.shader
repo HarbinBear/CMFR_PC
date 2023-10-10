@@ -59,11 +59,20 @@ Shader "CMFR/CMFR_Pass"
 			uniform float _SquelchedGridMappingBeta;
 			uniform int _MappingStrategy;
 			uniform int _DebugMode;
+			uniform int _OutputMode;
 
 			fixed4 frag(v2f i) : SV_Target
 			{
 				// return tex2D( _GT1 , i.uv );
 				// return tex2D( _MainTex , i.uv );
+				if( _OutputMode == 3 || _OutputMode == 4  )
+				{
+					_DebugMode = 1 ;
+				}
+				else
+				{
+					_DebugMode = 0 ; 
+				}
 
 				if (_iApplyRFRMap1 < 0.5)
 					return tex2D(_MainTex, i.uv);

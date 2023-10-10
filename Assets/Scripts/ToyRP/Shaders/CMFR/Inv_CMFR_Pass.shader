@@ -65,19 +65,27 @@ Shader "CMFR/Inv_CMFR_Pass"
 			uniform int _MappingStrategy;
 			uniform float _bSampleDensityWithNoise;
 			uniform int _DebugMode;
+			uniform int _OutputMode;
 			uniform float _validPercent;
 
 			fixed4 frag(v2f i) : SV_Target
 			{
+
+				if( _OutputMode == 3 || _OutputMode == 4  )
+				{
+					_DebugMode = 1 ;
+				}
+				else
+				{
+					_DebugMode = 0 ; 
+				}
+				
 				if (_iApplyRFRMap2 < 0.5)
 					return tex2D(_MidTex, i.uv);
 
 				float2 cursorPos = float2(_eyeX, _eyeY); //0-1 -> -1,1 (0,0)
 				float2 tc = (i.uv - cursorPos);
-
-
-
-
+				
 
 
 				float u,v;

@@ -1,6 +1,22 @@
 ﻿namespace Framework.CMFR
 {
     
+    public enum OutputTex
+    {
+        Original,
+        CMFRPass1_Albedo,
+        CMFRPass2,
+        SampleDensity,
+        SampleDensityJitter,
+    }
+
+    
+    // public enum DebugMode
+    // {
+    //     Render          = 0 ,
+    //     PixelDensity    = 1 ,
+    //
+    // }
     public enum MappingStrategy
     {
         RMFR                        = 0 ,    
@@ -37,6 +53,8 @@
         BindableProperty<int> iApplyRFRMap1 { get;  }
         BindableProperty<int> iApplyRFRMap2 { get;  }
         BindableProperty<int> debugMode { get;  }
+        BindableProperty<int> outputTex { get;  }
+        BindableProperty<bool> GM_On { get;  }
 
         
         
@@ -97,6 +115,15 @@
         public BindableProperty<int> mappingStrategy { get; } = new BindableProperty<int>()
         {
             Value = 4
+        }; 
+        public BindableProperty<int> outputTex { get; } = new BindableProperty<int>()
+        {
+            Value = 2
+        };
+        
+        public BindableProperty<bool> GM_On { get; } = new BindableProperty<bool>()
+        {
+            Value = false
         };
         
         protected override void OnInit()

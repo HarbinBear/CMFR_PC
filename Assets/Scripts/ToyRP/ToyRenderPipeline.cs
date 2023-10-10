@@ -28,7 +28,7 @@ namespace Framework.CMFR
 
         public RenderTexture GDepth
         {
-            get { return CMFR_On ? _gdepth_CMFR : _gdepth; }
+            get { return RenderSys.GetModel<ICMFRModel>().outputTex != 0 ? _gdepth_CMFR : _gdepth; }
         }
 
         RenderTexture[] _gbuffers = new RenderTexture[4]; // color attachments
@@ -36,7 +36,7 @@ namespace Framework.CMFR
 
         public RenderTexture[] GBuffers
         {
-            get { return CMFR_On ? _gbuffers_CMFR : _gbuffers; }
+            get { return RenderSys.GetModel<ICMFRModel>().outputTex != 0 ? _gbuffers_CMFR : _gbuffers; }
         }
 
         RenderTargetIdentifier _gdepthID;
@@ -44,7 +44,7 @@ namespace Framework.CMFR
 
         public RenderTargetIdentifier GDepthID
         {
-            get { return CMFR_On ? _gdepthID_CMFR : _gdepthID; }
+            get { return RenderSys.GetModel<ICMFRModel>().outputTex != 0 ? _gdepthID_CMFR : _gdepthID; }
         }
 
         RenderTargetIdentifier[] _gbufferID = new RenderTargetIdentifier[4]; // tex ID 
@@ -52,7 +52,7 @@ namespace Framework.CMFR
 
         public RenderTargetIdentifier[] GBufferID
         {
-            get { return CMFR_On ? _gbufferID_CMFR : _gbufferID; }
+            get { return RenderSys.GetModel<ICMFRModel>().outputTex != 0 ? _gbufferID_CMFR : _gbufferID; }
         }
 
         public Material CMFR_Mat;
@@ -92,9 +92,7 @@ namespace Framework.CMFR
 
         // instance data 数组
         public InstanceData[] instanceDatas;
-
-        public bool CMFR_On;
-
+        
         public ToyRenderPipeline()
         {
             Debug.Log("[ToyRenderPipeline] constructor");
@@ -238,13 +236,15 @@ namespace Framework.CMFR
                 vpMatrixPrev = vpMatrix;
             }
             
-            if( CMFR_On ) CMFRPass(context , camera );
+            if( RenderSys.GetModel<ICMFRModel>().outputTex != 0 ) 
+                CMFRPass(context , camera );
             
             ShadowMappingPass(context, camera);
             
             LightPass(context, camera);
             
-            if( CMFR_On ) InvCMFRPass( context ,camera);
+            if( RenderSys.GetModel<ICMFRModel>().outputTex != 0 ) 
+                InvCMFRPass( context ,camera);
 
             FinalPass(context, camera);
             
@@ -403,15 +403,9 @@ namespace Framework.CMFR
             mat.SetFloat("_fy", RenderSys.GetModel<ICMFRModel>().fy);
             mat.SetFloat("_SquelchedGridMappingBeta", RenderSys.GetModel<ICMFRModel>().squelchedGridMappingBeta);
             mat.SetInt("_MappingStrategy",RenderSys.GetModel<ICMFRModel>().mappingStrategy );
-            mat.SetInt("_DebugMode", (int)RenderSys.GetModel<ICMFRModel>().debugMode);
+            // mat.SetInt("_DebugMode", (int)RenderSys.GetModel<ICMFRModel>().debugMode);
+            mat.SetInt("_OutputMode", (int)RenderSys.GetModel<ICMFRModel>().outputTex);
             
-            if (mat == Inv_CMFR_Mat)
-            {
-                mat.SetTexture("_MidTex" , lightPassTex );
-                mat.SetInt("_iApplyRFRMap2", RenderSys.GetModel<ICMFRModel>().iApplyRFRMap1);
-                mat.SetFloat("_bSampleDensityWithNoise", RenderSys.GetModel<ICMFRModel>().sampleDensityWithNoise);
-                mat.SetFloat("_validPercent" , RenderSys.GetModel<ICMFRModel>().validPercent);
-            }
 
             if (mat == CMFR_Mat)
             {
@@ -422,6 +416,21 @@ namespace Framework.CMFR
             {
                 mat.SetInt("_iApplyRFRMap1", RenderSys.GetModel<ICMFRModel>().iApplyRFRMap1);
 
+            }
+            
+            if (mat == Inv_CMFR_Mat)
+            {
+                if (RenderSys.GetModel<ICMFRModel>().outputTex >= 3)
+                {
+                    mat.SetTexture("_MidTex", _gbuffers_CMFR[3]);
+                }
+                else
+                {
+                    mat.SetTexture("_MidTex", lightPassTex);
+                }
+                mat.SetInt("_iApplyRFRMap2", RenderSys.GetModel<ICMFRModel>().iApplyRFRMap1);
+                mat.SetFloat("_bSampleDensityWithNoise", RenderSys.GetModel<ICMFRModel>().sampleDensityWithNoise);
+                mat.SetFloat("_validPercent" , RenderSys.GetModel<ICMFRModel>().validPercent);
             }
 
             if (mat == Inv_CMFR_Depth_Mat)
@@ -512,18 +521,35 @@ namespace Framework.CMFR
             cmd.name = "finalpass";
 
             Material mat = new Material(Shader.Find("ToyRP/finalpass"));
-            if (CMFR_On)
+
+            switch (RenderSys.GetModel<ICMFRModel>().outputTex )
             {
-                cmd.Blit(InvCMFRTex, BuiltinRenderTextureType.CameraTarget, mat);
-            }
-            else
-            {
-                cmd.Blit(lightPassTex, BuiltinRenderTextureType.CameraTarget, mat);
-                
+                case (int)OutputTex.Original:
+                {
+                    cmd.Blit(lightPassTex, BuiltinRenderTextureType.CameraTarget, mat);
+                    break;
+                }
+                case (int)OutputTex.CMFRPass1_Albedo:
+                {
+                    cmd.Blit(_gbuffers_CMFR[0], BuiltinRenderTextureType.CameraTarget, mat);
+
+                    break;
+                }
+                case (int)OutputTex.CMFRPass2:
+                {
+                    cmd.Blit(InvCMFRTex, BuiltinRenderTextureType.CameraTarget, mat);
+                    break;
+                }
+                case (int)OutputTex.SampleDensity:
+                {
+                    cmd.Blit(InvCMFRTex, BuiltinRenderTextureType.CameraTarget, mat);
+                    break;
+                }
             }
             context.ExecuteCommandBuffer(cmd);
             context.Submit();
         }
+        
 
         // 绘制 instanceData 列表中的所有 instance
         void InstanceDrawPass(ScriptableRenderContext context, Camera camera)

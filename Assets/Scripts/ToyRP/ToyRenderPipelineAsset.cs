@@ -20,7 +20,6 @@ namespace Framework.CMFR
         [SerializeField] public CsmSettings csmSettings;
         public InstanceData[] instanceDatas;
 
-        public bool CMFR_On;
         public Material CMFR_Mat;
         public Material CMFR_Depth_Mat;
         public Material Inv_CMFR_Mat;
@@ -37,7 +36,6 @@ namespace Framework.CMFR
             rp.blueNoiseTex = blueNoiseTex;
             rp.csmSettings = csmSettings;
             rp.instanceDatas = instanceDatas;
-            rp.CMFR_On = CMFR_On;
             rp.CMFR_Mat = CMFR_Mat;
             rp.CMFR_Depth_Mat = CMFR_Depth_Mat;
             rp.Inv_CMFR_Mat = Inv_CMFR_Mat;
