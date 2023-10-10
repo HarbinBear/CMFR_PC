@@ -52,7 +52,6 @@
         BindableProperty<int> mappingStrategy { get;  }
         BindableProperty<int> iApplyRFRMap1 { get;  }
         BindableProperty<int> iApplyRFRMap2 { get;  }
-        BindableProperty<int> debugMode { get;  }
         BindableProperty<int> outputTex { get;  }
         BindableProperty<bool> GM_On { get;  }
 
@@ -108,10 +107,7 @@
         {
             Value = 1
         };
-        public BindableProperty<int> debugMode { get; } = new BindableProperty<int>()
-        {
-            Value = 0
-        };
+
         public BindableProperty<int> mappingStrategy { get; } = new BindableProperty<int>()
         {
             Value = 4

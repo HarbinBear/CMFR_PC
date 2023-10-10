@@ -90,7 +90,7 @@ Material:
     - _fx: 0.2
     - _fy: 0.2
     - _iApplyLogMap2: 1
-    - _scaleRatio: 1
+    - _scaleRatio: 2.2
     - _validPercent: 0.78
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}

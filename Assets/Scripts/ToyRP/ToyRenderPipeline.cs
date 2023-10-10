@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEditor;
@@ -110,32 +111,27 @@ namespace Framework.CMFR
             Application.targetFrameRate = 60; // 帧率
 
             // 创建纹理
-            _gdepth = new RenderTexture(Screen.width, Screen.height, 24, RenderTextureFormat.Depth,
-                RenderTextureReadWrite.Linear);
-            _gbuffers[0] = new RenderTexture(Screen.width, Screen.height, 0, RenderTextureFormat.ARGB32,
-                RenderTextureReadWrite.Linear);
+            _gdepth = new RenderTexture(Screen.width, Screen.height, 24, RenderTextureFormat.Depth);
+            _gbuffers[0] = new RenderTexture(Screen.width, Screen.height, 0, RenderTextureFormat.ARGB32);
             _gbuffers[1] = new RenderTexture(Screen.width, Screen.height, 0, RenderTextureFormat.ARGB2101010,
                 RenderTextureReadWrite.Linear);
             _gbuffers[2] = new RenderTexture(Screen.width, Screen.height, 0, RenderTextureFormat.ARGB64,
                 RenderTextureReadWrite.Linear);
             _gbuffers[3] = new RenderTexture(Screen.width, Screen.height, 0, RenderTextureFormat.ARGBFloat,
                 RenderTextureReadWrite.Linear);
+
+            float sigma = RenderSys.GetModel<ICMFRModel>().sigma;
+            int sigmaWidth = Mathf.RoundToInt(Screen.width / sigma);
+            int sigmaHeight = Mathf.RoundToInt(Screen.height / sigma);
             
-            _gdepth_CMFR = new RenderTexture(Screen.width, Screen.height, 0, RenderTextureFormat.RFloat,
-                RenderTextureReadWrite.Linear);
-            _gbuffers_CMFR[0] = new RenderTexture(Screen.width, Screen.height, 0, RenderTextureFormat.ARGB32,
-                RenderTextureReadWrite.Linear);
-            _gbuffers_CMFR[1] = new RenderTexture(Screen.width, Screen.height, 0, RenderTextureFormat.ARGB2101010,
-                RenderTextureReadWrite.Linear);
-            _gbuffers_CMFR[2] = new RenderTexture(Screen.width, Screen.height, 0, RenderTextureFormat.ARGB64,
-                RenderTextureReadWrite.Linear);
-            _gbuffers_CMFR[3] = new RenderTexture(Screen.width, Screen.height, 0, RenderTextureFormat.ARGBFloat,
-                RenderTextureReadWrite.Linear);
+            _gdepth_CMFR      = new RenderTexture(sigmaWidth, sigmaHeight, 0, RenderTextureFormat.RFloat     );
+            _gbuffers_CMFR[0] = new RenderTexture(sigmaWidth, sigmaHeight, 0, RenderTextureFormat.ARGB32     );
+            _gbuffers_CMFR[1] = new RenderTexture(sigmaWidth, sigmaHeight, 0, RenderTextureFormat.ARGB2101010);
+            _gbuffers_CMFR[2] = new RenderTexture(sigmaWidth, sigmaHeight, 0, RenderTextureFormat.ARGB64     );
+            _gbuffers_CMFR[3] = new RenderTexture(sigmaWidth, sigmaHeight, 0, RenderTextureFormat.ARGBFloat  );
             
-            lightPassTex = new RenderTexture(Screen.width, Screen.height, 0, RenderTextureFormat.ARGBFloat,
-                RenderTextureReadWrite.Linear);
-            InvCMFRTex = new RenderTexture(Screen.width, Screen.height, 0, RenderTextureFormat.ARGBFloat,
-                RenderTextureReadWrite.Linear);
+            lightPassTex = new RenderTexture(Screen.width, Screen.height, 0, RenderTextureFormat.ARGBFloat);
+            InvCMFRTex = new RenderTexture(Screen.width, Screen.height, 0, RenderTextureFormat.ARGBFloat);
             
 
             tempDepthRT2 =
@@ -168,6 +164,27 @@ namespace Framework.CMFR
             csm = new CSM();
 
             clusterLight = new ClusterLight();
+
+            RenderSys.RegisterEvent<GBufferSizeChangeEvent>(OnGBufferSizeChanged);
+        }
+
+        private void OnGBufferSizeChanged(GBufferSizeChangeEvent e)
+        {
+            float sigma = RenderSys.GetModel<ICMFRModel>().sigma;
+            int sigmaWidth = Mathf.RoundToInt(Screen.width / sigma);
+            int sigmaHeight = Mathf.RoundToInt(Screen.height / sigma);
+            
+            _gdepth_CMFR.Release();
+            foreach (var buffer in _gbuffers_CMFR)
+            {
+                buffer.Release();
+            }
+
+            _gdepth_CMFR      = new RenderTexture(sigmaWidth, sigmaHeight, 0, RenderTextureFormat.RFloat     );
+            _gbuffers_CMFR[0] = new RenderTexture(sigmaWidth, sigmaHeight, 0, RenderTextureFormat.ARGB32     );
+            _gbuffers_CMFR[1] = new RenderTexture(sigmaWidth, sigmaHeight, 0, RenderTextureFormat.ARGB2101010);
+            _gbuffers_CMFR[2] = new RenderTexture(sigmaWidth, sigmaHeight, 0, RenderTextureFormat.ARGB64     );
+            _gbuffers_CMFR[3] = new RenderTexture(sigmaWidth, sigmaHeight, 0, RenderTextureFormat.ARGBFloat  );
         }
         
 
@@ -398,7 +415,7 @@ namespace Framework.CMFR
         {
             mat.SetFloat("_eyeX", RenderSys.GetModel<ICMFRModel>().eyeX );
             mat.SetFloat("_eyeY", RenderSys.GetModel<ICMFRModel>().eyeY);
-            mat.SetFloat("_scaleRatio", RenderSys.GetModel<ICMFRModel>().scaleRatio);
+            mat.SetFloat("_scaleRatio", RenderSys.GetModel<ICMFRModel>().sigma);
             mat.SetFloat("_fx", RenderSys.GetModel<ICMFRModel>().fx);
             mat.SetFloat("_fy", RenderSys.GetModel<ICMFRModel>().fy);
             mat.SetFloat("_SquelchedGridMappingBeta", RenderSys.GetModel<ICMFRModel>().squelchedGridMappingBeta);
@@ -609,7 +626,7 @@ namespace Framework.CMFR
             context.ExecuteCommandBuffer(cmd);
             context.Submit();
         }
-
+        
         static ComputeShader FindComputeShader(string shaderName)
         {
             ComputeShader[] css = Resources.FindObjectsOfTypeAll(typeof(ComputeShader)) as ComputeShader[];

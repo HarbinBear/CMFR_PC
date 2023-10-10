@@ -1,14 +1,15 @@
 ﻿using System;
+using Command;
 using Framework.CMFR;
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.UIElements;
 using Button = UnityEngine.UI.Button;
+using Slider = UnityEngine.UI.Slider;
 using Toggle = UnityEngine.UI.Toggle;
 
 namespace Framework.CMFR
 {
-    public class ViewController : MonoBehaviour
+    public class ViewController : MonoBehaviour , IController
     {
         private ICMFRModel mCMFRModel;
         public GameObject SliderPanel;
@@ -30,38 +31,39 @@ namespace Framework.CMFR
 
         private void InitUI()
         {
-            #region Output Texture 
-            
-            GameObject panelOutput = Instantiate(DropDownPanel);
-            panelOutput.transform.SetParent(ScrollViewContentTransform);
-            SetNameForPanel( panelOutput , "输出"  );
-            SetUpDropDownForPanel( panelOutput , typeof(OutputTex) , mCMFRModel.outputTex );
-            
-            #endregion
-            
-            
-            
-            #region Mapping Strategy
-            
-            GameObject panelStrat = Instantiate(DropDownPanel);
-            panelStrat.transform.SetParent(ScrollViewContentTransform);
-            SetNameForPanel( panelStrat , "映射策略");
-            SetUpDropDownForPanel( panelStrat , typeof(MappingStrategy ) , mCMFRModel.mappingStrategy );
-
-            
-            #endregion
-
-
-            #region Btn Switch
-
+            // button switch
             btnSwitch.onClick.AddListener( () =>
             {
                 mCMFRModel.GM_On.Value = !mCMFRModel.GM_On.Value;
                 PanelGM.SetActive( mCMFRModel.GM_On.Value );
             });
 
-            #endregion
             
+            // output mode
+            GameObject panelOutput = Instantiate(DropDownPanel);
+            SetNameForPanel( panelOutput , "输出"  );
+            SetUpDropDownForPanel( panelOutput , typeof(OutputTex) , mCMFRModel.outputTex );
+
+            // Mapping Strategy
+            GameObject panelStrat = Instantiate(DropDownPanel);
+            SetNameForPanel( panelStrat , "映射策略");
+            SetUpDropDownForPanel( panelStrat , typeof(MappingStrategy ) , mCMFRModel.mappingStrategy );
+            
+
+            // sigma
+            GameObject panelSigma = Instantiate(SliderPanel);
+            SetNameForPanel( panelSigma , "sigma" );
+            SetUpSliderForPanel( panelSigma , mCMFRModel.sigma , 1.0f , 3.0f );
+
+            // fx
+            GameObject panelFx = Instantiate(SliderPanel);
+            SetNameForPanel( panelFx , "fx" );
+            SetUpSliderForPanel( panelFx , mCMFRModel.fx , 0.01f , 0.99f );
+            
+            // fy
+            GameObject panelFy = Instantiate(SliderPanel);
+            SetNameForPanel( panelFy , "fy" );
+            SetUpSliderForPanel( panelFy , mCMFRModel.fy , 0.01f , 0.99f );
         }
 
         private void SetNameForPanel(GameObject panel , string name )
@@ -78,6 +80,7 @@ namespace Framework.CMFR
 
         private void SetUpDropDownForPanel(GameObject panel, Type enumType, BindableProperty<int> property)
         {
+            panel.transform.SetParent(ScrollViewContentTransform);
             Dropdown dropdown = GetCompForPanel<Dropdown>(panel);
             dropdown.options.Clear();
             SetOptionsForDropDown( dropdown , enumType );
@@ -87,6 +90,24 @@ namespace Framework.CMFR
             });
             dropdown.value = property.Value;
         }
+
+        private void SetUpSliderForPanel(GameObject panel, BindableProperty<float> property , float minValue , float maxValue )
+        {
+            panel.transform.SetParent(ScrollViewContentTransform);
+            Slider slider = GetCompForPanel<Slider>(panel);
+            Text valueText = panel.transform.GetChild(1).GetComponent<Text>();
+            slider.minValue = minValue;
+            slider.maxValue = maxValue;
+            slider.value = property.Value;
+            valueText.text = property.Value.ToString();
+            slider.onValueChanged.AddListener(value =>
+            {
+                property.Value = value;
+                value = (float) Math.Round(value, 3); 
+                valueText.text = value.ToString() ; 
+                if( property == mCMFRModel.sigma ) this.SendCommand<GBufferSizeChangeCommand>();
+            });
+        }
         
         private void SetOptionsForDropDown(Dropdown comp, Type enumType)
         {
@@ -95,6 +116,11 @@ namespace Framework.CMFR
             {
                 comp.options.Add( new Dropdown.OptionData( name ));
             }
+        }
+        
+        IArchitecture IBelongToArchitecture.GetArchitecture()
+        {
+            return CMFRDemo.Interface;
         }
     }
 }
