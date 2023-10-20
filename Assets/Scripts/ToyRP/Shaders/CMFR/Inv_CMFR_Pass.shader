@@ -167,6 +167,13 @@ Shader "CMFR/Inv_CMFR_Pass"
 					u = var1 / tt.y ;
 					v = var1 / tt.x ;
 				}
+
+				// schwarz-christoffel
+				// Disc to Square
+				if( _MappingStrategy == 7 )
+				{
+					
+				}
 				
 
 				// hyperbolic
