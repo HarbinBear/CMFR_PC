@@ -64,6 +64,11 @@ namespace Framework.CMFR
             GameObject panelFy = Instantiate(SliderPanel);
             SetNameForPanel( panelFy , "fy" );
             SetUpSliderForPanel( panelFy , mCMFRModel.fy , 0.01f , 0.99f );
+            
+            // taa
+            GameObject panelTaa = Instantiate(TogglePanel);
+            SetNameForPanel( panelTaa , "TAA");
+            SetUpToggleForPanel( panelTaa , mCMFRModel.TAA_On );
         }
 
         private void SetNameForPanel(GameObject panel , string name )
@@ -107,6 +112,17 @@ namespace Framework.CMFR
                 valueText.text = value.ToString() ; 
                 if( property == mCMFRModel.sigma ) this.SendCommand<GBufferSizeChangeCommand>();
             });
+        }
+
+        void SetUpToggleForPanel(GameObject panel, BindableProperty<bool> property)
+        {
+            panel.transform.SetParent(ScrollViewContentTransform);
+            Toggle toggle = GetCompForPanel<Toggle>(panel);
+            toggle.onValueChanged.AddListener(value =>
+            {
+                property.Value = value;
+            });
+            toggle.isOn = property.Value;
         }
         
         private void SetOptionsForDropDown(Dropdown comp, Type enumType)

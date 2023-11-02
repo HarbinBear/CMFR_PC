@@ -54,6 +54,7 @@
         BindableProperty<int> iApplyRFRMap2 { get;  }
         BindableProperty<int> outputTex { get;  }
         BindableProperty<bool> GM_On { get;  }
+        BindableProperty<bool> TAA_On { get;  }
 
         
         
@@ -120,6 +121,11 @@
         public BindableProperty<bool> GM_On { get; } = new BindableProperty<bool>()
         {
             Value = false
+        };        
+        
+        public BindableProperty<bool> TAA_On { get; } = new BindableProperty<bool>()
+        {
+            Value = true
         };
         
         protected override void OnInit()
