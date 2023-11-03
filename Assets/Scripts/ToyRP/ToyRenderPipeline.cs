@@ -108,8 +108,8 @@ namespace Framework.CMFR
             {
                 Debug.LogError("[ToyRenderPipeline] GameComp is null !");
             }
-            QualitySettings.vSyncCount = 0; // 关闭垂直同步
-            Application.targetFrameRate = 60; // 帧率
+            // QualitySettings.vSyncCount = 0; // 关闭垂直同步
+            // Application.targetFrameRate = 60; // 帧率
 
             // 创建纹理
             _gdepth = new RenderTexture(Screen.width, Screen.height, 24, RenderTextureFormat.Depth);
@@ -125,7 +125,7 @@ namespace Framework.CMFR
             int sigmaWidth = Mathf.RoundToInt(Screen.width / sigma);
             int sigmaHeight = Mathf.RoundToInt(Screen.height / sigma);
             
-            _gdepth_CMFR      = new RenderTexture(sigmaWidth, sigmaHeight, 0, RenderTextureFormat.RFloat     );
+            _gdepth_CMFR      = new RenderTexture(Screen.width , Screen.height, 0, RenderTextureFormat.RFloat );
             _gbuffers_CMFR[0] = new RenderTexture(sigmaWidth, sigmaHeight, 0, RenderTextureFormat.ARGB32     );
             _gbuffers_CMFR[1] = new RenderTexture(sigmaWidth, sigmaHeight, 0, RenderTextureFormat.ARGB2101010);
             _gbuffers_CMFR[2] = new RenderTexture(sigmaWidth, sigmaHeight, 0, RenderTextureFormat.ARGB64     );
@@ -176,13 +176,13 @@ namespace Framework.CMFR
             int sigmaWidth = Mathf.RoundToInt(Screen.width / sigma);
             int sigmaHeight = Mathf.RoundToInt(Screen.height / sigma);
             
-            _gdepth_CMFR.Release();
+            // _gdepth_CMFR.Release();
             foreach (var buffer in _gbuffers_CMFR)
             {
                 buffer.Release();
             }
 
-            _gdepth_CMFR      = new RenderTexture(sigmaWidth, sigmaHeight, 0, RenderTextureFormat.RFloat     );
+            // _gdepth_CMFR      = new RenderTexture(sigmaWidth, sigmaHeight, 0, RenderTextureFormat.RFloat     );
             _gbuffers_CMFR[0] = new RenderTexture(sigmaWidth, sigmaHeight, 0, RenderTextureFormat.ARGB32     );
             _gbuffers_CMFR[1] = new RenderTexture(sigmaWidth, sigmaHeight, 0, RenderTextureFormat.ARGB2101010);
             _gbuffers_CMFR[2] = new RenderTexture(sigmaWidth, sigmaHeight, 0, RenderTextureFormat.ARGB64     );
@@ -195,7 +195,7 @@ namespace Framework.CMFR
             // 主相机
             Camera camera = cameras[0];
             
-            PreCullPass(context , camera);
+            if( _renderSys.GetModel<ICMFRModel>().FrustumJitter_On == true ) PreCullPass(context , camera);
 
 
             // 全局变量设置
@@ -246,11 +246,11 @@ namespace Framework.CMFR
             
             ClusterLightingPass(context, camera);
 
-            ShadowCastingPass(context, camera);
+            // ShadowCastingPass(context, camera);
 
             GbufferPass(context, camera);
 
-            InstanceDrawPass(context, Camera.main);
+            // InstanceDrawPass(context, Camera.main);
             
             // only generate for main camera
             if (!isEditor)
@@ -262,7 +262,7 @@ namespace Framework.CMFR
             if( RenderSys.GetModel<ICMFRModel>().outputTex != 0 ) 
                 CMFRPass(context , camera );
             
-            ShadowMappingPass(context, camera);
+            // ShadowMappingPass(context, camera);
             
             LightPass(context, camera);
             
@@ -291,7 +291,14 @@ namespace Framework.CMFR
         void PreCullPass(ScriptableRenderContext context, Camera camera)
         {
             FrustumJitter jitter =  camera.GetComponentInParent<FrustumJitter>();
-            jitter.PreCull( context  );
+            if (jitter)
+            {
+                jitter.PreCull( context  );
+            }
+            else
+            {
+                Debug.Log("Miss Frustum Jitter ");
+            }
         }
         
 
@@ -408,12 +415,12 @@ namespace Framework.CMFR
             CommandBuffer cmd = new CommandBuffer();
             cmd.name = "CMFR";
 
-            SetCMFRMatParams( CMFR_Depth_Mat );
+            // SetCMFRMatParams( CMFR_Depth_Mat );
             SetCMFRMatParams( CMFR_Mat );
 
 
 
-            cmd.Blit(_gdepth, _gdepth_CMFR, CMFR_Depth_Mat);
+            cmd.Blit(_gdepth, _gdepth_CMFR);
             for (int i = 0; i < 4; i++)
             {
                 // _gbuffers[i].filterMode = FilterMode.Point;
@@ -535,9 +542,10 @@ namespace Framework.CMFR
 
             SetCMFRMatParams( Inv_CMFR_Mat );
             cmd.Blit(null, InvCMFRTex, Inv_CMFR_Mat);
-            SetCMFRMatParams( Inv_CMFR_Depth_Mat );
-            cmd.Blit(null,tempDepthRT2 , Inv_CMFR_Depth_Mat );
-            cmd.Blit(tempDepthRT2, _gdepth_CMFR);
+            // SetCMFRMatParams( Inv_CMFR_Depth_Mat );
+            // cmd.Blit(null,tempDepthRT2 , Inv_CMFR_Depth_Mat );
+            // cmd.Blit(tempDepthRT2, _gdepth_CMFR);
+            
 
             context.ExecuteCommandBuffer(cmd);
             context.Submit();
@@ -554,6 +562,7 @@ namespace Framework.CMFR
             cmd.name = "TAA";
 
             TemporalReprojection taa = camera.GetComponentInParent<TemporalReprojection>();
+            if (taa == null) return;
             switch (RenderSys.GetModel<ICMFRModel>().outputTex )
             {
                 case (int)OutputTex.Original:

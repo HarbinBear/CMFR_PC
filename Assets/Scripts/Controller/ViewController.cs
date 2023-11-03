@@ -68,7 +68,12 @@ namespace Framework.CMFR
             // taa
             GameObject panelTaa = Instantiate(TogglePanel);
             SetNameForPanel( panelTaa , "TAA");
-            SetUpToggleForPanel( panelTaa , mCMFRModel.TAA_On );
+            SetUpToggleForPanel( panelTaa , mCMFRModel.TAA_On );    
+            
+            // jitter
+            GameObject panelJitter = Instantiate(TogglePanel);
+            SetNameForPanel( panelJitter , "Frustum Jitter");
+            SetUpToggleForPanel( panelJitter , mCMFRModel.FrustumJitter_On );
         }
 
         private void SetNameForPanel(GameObject panel , string name )
