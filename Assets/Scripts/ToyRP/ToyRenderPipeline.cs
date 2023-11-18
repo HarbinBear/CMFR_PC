@@ -62,6 +62,7 @@ namespace Framework.CMFR
         public Material Inv_CMFR_Depth_Mat;
 
         RenderTexture lightPassTex; // 存储 light pass 的结果
+        RenderTexture largeLightPassTex; // 存储 light pass 的结果
         RenderTexture InvCMFRTex; // 存储 light pass 的结果
         RenderTexture TAATex; // 存储 light pass 的结果
         RenderTexture hizBuffer; // hi-z buffer
@@ -131,7 +132,9 @@ namespace Framework.CMFR
             _gbuffers_CMFR[2] = new RenderTexture(sigmaWidth, sigmaHeight, 0, RenderTextureFormat.ARGB64     );
             _gbuffers_CMFR[3] = new RenderTexture(sigmaWidth, sigmaHeight, 0, RenderTextureFormat.ARGBFloat  );
             
-            lightPassTex = new RenderTexture(Screen.width, Screen.height, 0, RenderTextureFormat.ARGBFloat);
+            lightPassTex = new RenderTexture(sigmaWidth, sigmaHeight, 0, RenderTextureFormat.ARGBFloat);
+            // lightPassTex = new RenderTexture(Screen.width, Screen.height, 0, RenderTextureFormat.ARGBFloat);
+            largeLightPassTex = new RenderTexture(Screen.width, Screen.height, 0, RenderTextureFormat.ARGBFloat);
             InvCMFRTex = new RenderTexture(Screen.width, Screen.height, 0, RenderTextureFormat.ARGBFloat);
             TAATex = new RenderTexture(Screen.width, Screen.height, 0, RenderTextureFormat.ARGBFloat);
             
@@ -524,7 +527,21 @@ namespace Framework.CMFR
             cmd.name = "lightpass";
 
             Material mat = new Material(Shader.Find("ToyRP/lightpass"));
-            cmd.Blit(GBufferID[0], lightPassTex, mat);
+            switch (RenderSys.GetModel<ICMFRModel>().outputTex)
+            {
+                case (int)OutputTex.Original:
+                {
+                    cmd.Blit(GBufferID[0], largeLightPassTex, mat);
+                    break;
+                }
+                case (int)OutputTex.CMFRPass2 or (int)OutputTex.CMFRPass1_Albedo or (int)OutputTex.SampleDensity :
+                {
+                    cmd.Blit(GBufferID[0], lightPassTex, mat);
+                    cmd.Blit( lightPassTex, largeLightPassTex);
+                    break;
+                }
+            }
+
             context.ExecuteCommandBuffer(cmd);
 
             context.Submit();
@@ -567,7 +584,7 @@ namespace Framework.CMFR
             {
                 case (int)OutputTex.Original:
                 { 
-                    taa.RenderTAA(lightPassTex,TAATex);
+                    taa.RenderTAA(largeLightPassTex,TAATex);
                     break;
                 }
                 case (int)OutputTex.CMFRPass1_Albedo:
@@ -611,7 +628,7 @@ namespace Framework.CMFR
                 {
                     case (int)OutputTex.Original:
                     {
-                        cmd.Blit(lightPassTex, BuiltinRenderTextureType.CameraTarget, mat);
+                        cmd.Blit(largeLightPassTex, BuiltinRenderTextureType.CameraTarget, mat);
                         break;
                     }
                     case (int)OutputTex.CMFRPass1_Albedo:

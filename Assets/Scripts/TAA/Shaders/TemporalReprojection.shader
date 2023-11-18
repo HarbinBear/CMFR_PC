@@ -144,19 +144,12 @@ Shader "Playdead/Post/TemporalReprojection"
 
 		const float eps = FLT_EPS;
 
-		if (r.x > rmax.x + eps)
-			r *= (rmax.x / r.x);
-		if (r.y > rmax.y + eps)
-			r *= (rmax.y / r.y);
-		if (r.z > rmax.z + eps)
-			r *= (rmax.z / r.z);
-
-		if (r.x < rmin.x - eps)
-			r *= (rmin.x / r.x);
-		if (r.y < rmin.y - eps)
-			r *= (rmin.y / r.y);
-		if (r.z < rmin.z - eps)
-			r *= (rmin.z / r.z);
+		if (r.x > rmax.x + eps) r *= (rmax.x / r.x);
+		if (r.y > rmax.y + eps)	r *= (rmax.y / r.y);
+		if (r.z > rmax.z + eps)	r *= (rmax.z / r.z);
+		if (r.x < rmin.x - eps)	r *= (rmin.x / r.x);
+		if (r.y < rmin.y - eps)	r *= (rmin.y / r.y);
+		if (r.z < rmin.z - eps)	r *= (rmin.z / r.z);
 
 		return p + r;
 	#endif
@@ -228,6 +221,10 @@ Shader "Playdead/Post/TemporalReprojection"
 		float2 uv = ss_txc;
 	#endif
 
+	float4 cmin;
+	float4 cmax;
+		
+		
 	#if MINMAX_3X3 || MINMAX_3X3_ROUNDED
 
 		float2 du = float2(_MainTex_TexelSize.x, 0.0);
@@ -243,8 +240,8 @@ Shader "Playdead/Post/TemporalReprojection"
 		float4 cbc = sample_color(_MainTex, uv + dv);
 		float4 cbr = sample_color(_MainTex, uv + dv + du);
 
-		float4 cmin = min(ctl, min(ctc, min(ctr, min(cml, min(cmc, min(cmr, min(cbl, min(cbc, cbr))))))));
-		float4 cmax = max(ctl, max(ctc, max(ctr, max(cml, max(cmc, max(cmr, max(cbl, max(cbc, cbr))))))));
+		cmin = min(ctl, min(ctc, min(ctr, min(cml, min(cmc, min(cmr, min(cbl, min(cbc, cbr))))))));
+		cmax = max(ctl, max(ctc, max(ctr, max(cml, max(cmc, max(cmr, max(cbl, max(cbc, cbr))))))));
 
 		#if MINMAX_3X3_ROUNDED || USE_YCOCG || USE_CLIPPING
 			float4 cavg = (ctl + ctc + ctr + cml + cmc + cmr + cbl + cbc + cbr) / 9.0;
@@ -277,8 +274,8 @@ Shader "Playdead/Post/TemporalReprojection"
 		float4 c01 = sample_color(_MainTex, uv + ss_offset01);
 		float4 c11 = sample_color(_MainTex, uv + ss_offset11);
 
-		float4 cmin = min(c00, min(c10, min(c01, c11)));
-		float4 cmax = max(c00, max(c10, max(c01, c11)));
+		cmin = min(c00, min(c10, min(c01, c11)));
+		cmax = max(c00, max(c10, max(c01, c11)));
 
 		#if USE_YCOCG || USE_CLIPPING
 			float4 cavg = (c00 + c10 + c01 + c11) / 4.0;
