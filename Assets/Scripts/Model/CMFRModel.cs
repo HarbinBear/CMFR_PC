@@ -55,6 +55,7 @@
         BindableProperty<int> outputTex { get;  }
         BindableProperty<bool> GM_On { get;  }
         BindableProperty<bool> TAA_On { get;  }
+        BindableProperty<bool> Bokeh_On { get;  }
         BindableProperty<bool> FrustumJitter_On { get;  }
 
         
@@ -127,7 +128,11 @@
         public BindableProperty<bool> TAA_On { get; } = new BindableProperty<bool>()
         {
             Value = true
-        };        
+        };       
+        public BindableProperty<bool> Bokeh_On { get; } = new BindableProperty<bool>()
+        {
+            Value = true
+        };    
         public BindableProperty<bool> FrustumJitter_On { get; } = new BindableProperty<bool>()
         {
             Value = true

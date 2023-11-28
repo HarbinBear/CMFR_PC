@@ -74,6 +74,13 @@ namespace Framework.CMFR
             GameObject panelJitter = Instantiate(TogglePanel);
             SetNameForPanel( panelJitter , "Frustum Jitter");
             SetUpToggleForPanel( panelJitter , mCMFRModel.FrustumJitter_On );
+            
+            // Bokeh
+            GameObject panelBokeh = Instantiate(TogglePanel);
+            SetNameForPanel( panelBokeh , "Bokeh");
+            SetUpToggleForPanel( panelBokeh , mCMFRModel.Bokeh_On );    
+            
+            
         }
 
         private void SetNameForPanel(GameObject panel , string name )

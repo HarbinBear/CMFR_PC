@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Kino;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -65,6 +66,7 @@ namespace Framework.CMFR
         RenderTexture largeLightPassTex; // 存储 light pass 的结果
         RenderTexture InvCMFRTex; // 存储 light pass 的结果
         RenderTexture TAATex; // 存储 light pass 的结果
+        RenderTexture BokehTex; // 存储 light pass 的结果
         RenderTexture hizBuffer; // hi-z buffer
 
         Matrix4x4 vpMatrix;
@@ -137,6 +139,7 @@ namespace Framework.CMFR
             largeLightPassTex = new RenderTexture(Screen.width, Screen.height, 0, RenderTextureFormat.ARGBFloat);
             InvCMFRTex = new RenderTexture(Screen.width, Screen.height, 0, RenderTextureFormat.ARGBFloat);
             TAATex = new RenderTexture(Screen.width, Screen.height, 0, RenderTextureFormat.ARGBFloat);
+            BokehTex = new RenderTexture(Screen.width, Screen.height, 0, RenderTextureFormat.ARGBFloat);
             
 
             tempDepthRT2 =
@@ -272,7 +275,9 @@ namespace Framework.CMFR
             if( RenderSys.GetModel<ICMFRModel>().outputTex != 0 ) 
                 InvCMFRPass( context ,camera);
 
-            TAAPass(context, camera);
+            if( RenderSys.GetModel<ICMFRModel>().TAA_On ) TAAPass(context, camera);
+            
+            if( RenderSys.GetModel<ICMFRModel>().Bokeh_On ) BokehPass( context , camera );
 
             FinalPass(context, camera);
             
@@ -297,10 +302,6 @@ namespace Framework.CMFR
             if (jitter)
             {
                 jitter.PreCull( context  );
-            }
-            else
-            {
-                Debug.Log("Miss Frustum Jitter ");
             }
         }
         
@@ -487,37 +488,37 @@ namespace Framework.CMFR
 
 
         // 阴影计算 pass : 输出阴影强度 texture
-        void ShadowMappingPass(ScriptableRenderContext context, Camera camera)
-        {
-            CommandBuffer cmd = new CommandBuffer();
-            cmd.name = "shadowmappingpass";
-
-            RenderTexture tempTex1 = RenderTexture.GetTemporary(Screen.width / 4, Screen.height / 4, 0,
-                RenderTextureFormat.R8, RenderTextureReadWrite.Linear);
-            RenderTexture tempTex2 = RenderTexture.GetTemporary(Screen.width / 4, Screen.height / 4, 0,
-                RenderTextureFormat.R8, RenderTextureReadWrite.Linear);
-            RenderTexture tempTex3 = RenderTexture.GetTemporary(Screen.width, Screen.height, 0, RenderTextureFormat.R8,
-                RenderTextureReadWrite.Linear);
-
-            if (csmSettings.usingShadowMask)
-            {
-                // 生成 Mask, 模糊 Mask
-                cmd.Blit(GBufferID[0], tempTex1, new Material(Shader.Find("ToyRP/preshadowmappingpass")));
-                cmd.Blit(tempTex1, tempTex2, new Material(Shader.Find("ToyRP/blurNx1")));
-                cmd.Blit(tempTex2, shadowMask, new Material(Shader.Find("ToyRP/blur1xN")));
-            }
-
-            // 生成阴影, 模糊阴影
-            cmd.Blit(GBufferID[0], tempTex3, new Material(Shader.Find("ToyRP/shadowmappingpass")));
-            cmd.Blit(tempTex3, shadowStrength, new Material(Shader.Find("ToyRP/blurNxN")));
-
-            RenderTexture.ReleaseTemporary(tempTex1);
-            RenderTexture.ReleaseTemporary(tempTex2);
-            RenderTexture.ReleaseTemporary(tempTex3);
-
-            context.ExecuteCommandBuffer(cmd);
-            context.Submit();
-        }
+        // void ShadowMappingPass(ScriptableRenderContext context, Camera camera)
+        // {
+        //     CommandBuffer cmd = new CommandBuffer();
+        //     cmd.name = "shadowmappingpass";
+        //
+        //     RenderTexture tempTex1 = RenderTexture.GetTemporary(Screen.width / 4, Screen.height / 4, 0,
+        //         RenderTextureFormat.R8, RenderTextureReadWrite.Linear);
+        //     RenderTexture tempTex2 = RenderTexture.GetTemporary(Screen.width / 4, Screen.height / 4, 0,
+        //         RenderTextureFormat.R8, RenderTextureReadWrite.Linear);
+        //     RenderTexture tempTex3 = RenderTexture.GetTemporary(Screen.width, Screen.height, 0, RenderTextureFormat.R8,
+        //         RenderTextureReadWrite.Linear);
+        //
+        //     if (csmSettings.usingShadowMask)
+        //     {
+        //         // 生成 Mask, 模糊 Mask
+        //         cmd.Blit(GBufferID[0], tempTex1, new Material(Shader.Find("ToyRP/preshadowmappingpass")));
+        //         cmd.Blit(tempTex1, tempTex2, new Material(Shader.Find("ToyRP/blurNx1")));
+        //         cmd.Blit(tempTex2, shadowMask, new Material(Shader.Find("ToyRP/blur1xN")));
+        //     }
+        //
+        //     // 生成阴影, 模糊阴影
+        //     cmd.Blit(GBufferID[0], tempTex3, new Material(Shader.Find("ToyRP/shadowmappingpass")));
+        //     cmd.Blit(tempTex3, shadowStrength, new Material(Shader.Find("ToyRP/blurNxN")));
+        //
+        //     RenderTexture.ReleaseTemporary(tempTex1);
+        //     RenderTexture.ReleaseTemporary(tempTex2);
+        //     RenderTexture.ReleaseTemporary(tempTex3);
+        //
+        //     context.ExecuteCommandBuffer(cmd);
+        //     context.Submit();
+        // }
 
         // 光照 Pass : 计算 PBR 光照并且存储到 lightPassTex 纹理
         void LightPass(ScriptableRenderContext context, Camera camera)
@@ -580,32 +581,34 @@ namespace Framework.CMFR
 
             TemporalReprojection taa = camera.GetComponentInParent<TemporalReprojection>();
             if (taa == null) return;
-            switch (RenderSys.GetModel<ICMFRModel>().outputTex )
-            {
-                case (int)OutputTex.Original:
-                { 
-                    taa.RenderTAA(largeLightPassTex,TAATex);
-                    break;
-                }
-                case (int)OutputTex.CMFRPass1_Albedo:
-                {
-                    taa.RenderTAA(_gbuffers_CMFR[0],TAATex);
-                    break;
-                }
-                case (int)OutputTex.CMFRPass2:
-                {
-                    taa.RenderTAA(InvCMFRTex,TAATex);
-                    break;
-                }
-                case (int)OutputTex.SampleDensity:
-                {
-                    taa.RenderTAA(InvCMFRTex,TAATex);
-                    break;
-                }
-            }            
+            taa.RenderTAA( GetCurBuffer(),TAATex );         
+            
             context.ExecuteCommandBuffer(cmd);
             context.Submit();
             
+        }
+
+
+        void BokehPass(ScriptableRenderContext context, Camera camera)
+        {
+            CommandBuffer cmd = new CommandBuffer();
+            cmd.name = "Bokeh";
+
+            Bokeh bokeh = camera.GetComponentInParent<Bokeh>();
+            if (bokeh == null) return; 
+            if (RenderSys.GetModel<ICMFRModel>().TAA_On == true)
+            {
+                bokeh.OnBokeh( TAATex , _gdepth_CMFR  , BokehTex );
+            }
+            else
+            {
+                bokeh.OnBokeh( GetCurBuffer() , _gdepth_CMFR ,  BokehTex );
+             
+            }
+            
+            context.ExecuteCommandBuffer(cmd);
+            context.Submit();
+
         }
         
         
@@ -617,38 +620,26 @@ namespace Framework.CMFR
             cmd.name = "finalpass";
 
             Material mat = new Material(Shader.Find("ToyRP/finalpass"));
-            if (RenderSys.GetModel<ICMFRModel>().TAA_On == true)
-            {
-                cmd.Blit(TAATex,BuiltinRenderTextureType.CameraTarget,mat);
 
+            if (RenderSys.GetModel<ICMFRModel>().Bokeh_On == false  )
+            {
+                if (RenderSys.GetModel<ICMFRModel>().TAA_On == true)
+                {
+                    cmd.Blit(TAATex,BuiltinRenderTextureType.CameraTarget,mat);
+
+                }
+                else
+                {
+                    cmd.Blit( GetCurBuffer() , BuiltinRenderTextureType.CameraTarget , mat );
+                }
             }
             else
             {
-                switch (RenderSys.GetModel<ICMFRModel>().outputTex )
-                {
-                    case (int)OutputTex.Original:
-                    {
-                        cmd.Blit(largeLightPassTex, BuiltinRenderTextureType.CameraTarget, mat);
-                        break;
-                    }
-                    case (int)OutputTex.CMFRPass1_Albedo:
-                    {
-                        cmd.Blit(_gbuffers_CMFR[0], BuiltinRenderTextureType.CameraTarget, mat);
+                cmd.Blit(BokehTex,BuiltinRenderTextureType.CameraTarget,mat);
 
-                        break;
-                    }
-                    case (int)OutputTex.CMFRPass2:
-                    {
-                        cmd.Blit(InvCMFRTex, BuiltinRenderTextureType.CameraTarget, mat);
-                        break;
-                    }
-                    case (int)OutputTex.SampleDensity:
-                    {
-                        cmd.Blit(InvCMFRTex, BuiltinRenderTextureType.CameraTarget, mat);
-                        break;
-                    }
-                }
             }
+            
+            
             
             context.ExecuteCommandBuffer(cmd);
             context.Submit();
@@ -656,26 +647,26 @@ namespace Framework.CMFR
         
 
         // 绘制 instanceData 列表中的所有 instance
-        void InstanceDrawPass(ScriptableRenderContext context, Camera camera)
-        {
-            CommandBuffer cmd = new CommandBuffer();
-            cmd.name = "instance gbuffer";
-            cmd.SetRenderTarget(_gbufferID, _gdepthID);
-
-            Matrix4x4 viewMatrix = camera.worldToCameraMatrix;
-            Matrix4x4 projMatrix = GL.GetGPUProjectionMatrix(camera.projectionMatrix, false);
-            Matrix4x4 vp = projMatrix * viewMatrix;
-
-            // 绘制 instance
-            ComputeShader cullingCs = FindComputeShader("InstanceCulling");
-            for (int i = 0; i < instanceDatas.Length; i++)
-            {
-                InstanceDrawer.Draw(instanceDatas[i], Camera.main, cullingCs, vpMatrixPrev, hizBuffer, ref cmd);
-            }
-
-            context.ExecuteCommandBuffer(cmd);
-            context.Submit();
-        }
+        // void InstanceDrawPass(ScriptableRenderContext context, Camera camera)
+        // {
+        //     CommandBuffer cmd = new CommandBuffer();
+        //     cmd.name = "instance gbuffer";
+        //     cmd.SetRenderTarget(_gbufferID, _gdepthID);
+        //
+        //     Matrix4x4 viewMatrix = camera.worldToCameraMatrix;
+        //     Matrix4x4 projMatrix = GL.GetGPUProjectionMatrix(camera.projectionMatrix, false);
+        //     Matrix4x4 vp = projMatrix * viewMatrix;
+        //
+        //     // 绘制 instance
+        //     ComputeShader cullingCs = FindComputeShader("InstanceCulling");
+        //     for (int i = 0; i < instanceDatas.Length; i++)
+        //     {
+        //         InstanceDrawer.Draw(instanceDatas[i], Camera.main, cullingCs, vpMatrixPrev, hizBuffer, ref cmd);
+        //     }
+        //
+        //     context.ExecuteCommandBuffer(cmd);
+        //     context.Submit();
+        // }
 
         // hiz pass
         void HizPass(ScriptableRenderContext context, Camera camera)
@@ -713,6 +704,33 @@ namespace Framework.CMFR
             context.ExecuteCommandBuffer(cmd);
             context.Submit();
         }
+
+
+        RenderTexture GetCurBuffer()
+        {
+            switch (RenderSys.GetModel<ICMFRModel>().outputTex )
+            {
+                case (int)OutputTex.Original:
+                {
+                    return largeLightPassTex;
+                }
+                case (int)OutputTex.CMFRPass1_Albedo:
+                {
+                    return _gbuffers_CMFR[0];
+                }
+                case (int)OutputTex.CMFRPass2:
+                {
+                    return InvCMFRTex;
+                }
+                case (int)OutputTex.SampleDensity:
+                {
+                    return InvCMFRTex;
+                }
+            }
+            
+            return largeLightPassTex;
+        }
+        
         
         static ComputeShader FindComputeShader(string shaderName)
         {
