@@ -90,8 +90,23 @@ Shader "CMFR/Inv_CMFR_Pass"
 
 				float u,v;
 				float2 tt = tc;
+
 				tt /= sqrt(2);
 				tt = tt * 2 ;      //  [ -1 , 1 ]
+
+				
+				_eyeX = ( _eyeX * 2 ) - 1 ;
+				_eyeY = ( _eyeY * 2 ) - 1 ;
+				
+				// --------- rect to square -----------
+				if( tt.x > 0 && tt.y > 0  )
+				{
+					tt.x = ( tt.x ) / ( 1 - _eyeX );
+					tt.y = ( tt.y ) / ( 1 - _eyeY );
+					// return fixed4( tt.x , tt.y , 0 , 0 );
+				}
+				//
+				
 				float xx = pow( tt.x , 2 );
 				float yy = pow( tt.y , 2 );
 
@@ -145,10 +160,10 @@ Shader "CMFR/Inv_CMFR_Pass"
 					if( tt.x == 0 || tt.y == 0 ) discard;
 						
 					float temp = ( xx + yy ) * ( xx + yy - 4 * SS * xx * yy ) ;   // float temp = ( xx + yy ) * ( xx + yy - 4 * SS * xx * yy / ( xx + yy )) ;
-					if( temp < 0 ) return fixed4(0,1,0,1);
+					if( temp < 0 ) return fixed4(0,0,0,1);
 					temp = sqrt( temp );
 					temp = xx + yy - temp ;
-					if( temp < 0 ) return fixed4(0,1,0,1);
+					if( temp < 0 ) return fixed4(0,0,0,1);
 					temp = sqrt( temp );
 					temp = sign( tt.x * tt.y ) / S / sqrt(2) * temp ;     // temp = sign( x * y ) / S / sqrt(2) * temp * sqrt( xx + yy ) ;
 						
@@ -250,6 +265,15 @@ Shader "CMFR/Inv_CMFR_Pass"
 						v = sign( tt.y ) * var;
 					}
 				} 
+
+				// ------- square to rect --------
+				if( tt.x > 0 && tt.y > 0 )
+				{
+					u = ( 1 - _eyeX ) * u ;
+					v = ( 1 - _eyeY ) * v  ;
+					// return fixed4( u , v , 0 , 0 );
+				
+				}
 				
 
 					
@@ -260,8 +284,7 @@ Shader "CMFR/Inv_CMFR_Pass"
 					u/=2;
 					v/=2;
 
-					tc = fixed2(u,v);  //  [ -0.5 , 0.5 ] 
-					
+					tc = fixed2(u,v);  //  [ -0.5 , 0.5 ]
 				}
 
 				// --------------------------
@@ -303,7 +326,8 @@ Shader "CMFR/Inv_CMFR_Pass"
 					y = y / norDyNeg;
 					pq.y = y * maxDyNeg + cursorPos.y;
 				}
-					
+				
+
 				fixed4 col = tex2D(_MidTex, pq);
 
 

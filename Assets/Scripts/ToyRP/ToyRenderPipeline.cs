@@ -326,58 +326,58 @@ namespace Framework.CMFR
         }
 
         // 阴影贴图 pass
-        void ShadowCastingPass(ScriptableRenderContext context, Camera camera)
-        {
-            Profiler.BeginSample("MyPieceOfCode");
-
-            // 获取光源信息
-            Light light = RenderSettings.sun;
-            Vector3 lightDir = light.transform.rotation * Vector3.forward;
-
-            // 更新 shadowmap 分割
-            csm.Update(camera, lightDir, csmSettings);
-            csmSettings.Set();
-
-            csm.SaveMainCameraSettings(ref camera);
-            for (int level = 0; level < 4; level++)
-            {
-                // 将相机移到光源方向
-                csm.ConfigCameraToShadowSpace(ref camera, lightDir, level, orthoDistance, shadowMapResolution);
-
-                // 设置阴影矩阵, 视锥分割参数
-                Matrix4x4 v = camera.worldToCameraMatrix;
-                Matrix4x4 p = GL.GetGPUProjectionMatrix(camera.projectionMatrix, false);
-                Shader.SetGlobalMatrix("_shadowVpMatrix" + level, p * v);
-                Shader.SetGlobalFloat("_orthoWidth" + level, csm.orthoWidths[level]);
-
-                CommandBuffer cmd = new CommandBuffer();
-                cmd.name = "shadowmap" + level;
-
-                // 绘制前准备
-                context.SetupCameraProperties(camera);
-                cmd.SetRenderTarget(shadowTextures[level]);
-                cmd.ClearRenderTarget(true, true, Color.clear);
-                context.ExecuteCommandBuffer(cmd);
-                cmd.Clear();
-
-                // 剔除
-                camera.TryGetCullingParameters(out var cullingParameters);
-                var cullingResults = context.Cull(ref cullingParameters);
-                // config settings
-                ShaderTagId shaderTagId = new ShaderTagId("depthonly");
-                SortingSettings sortingSettings = new SortingSettings(camera);
-                DrawingSettings drawingSettings = new DrawingSettings(shaderTagId, sortingSettings);
-                FilteringSettings filteringSettings = FilteringSettings.defaultValue;
-
-                // 绘制
-                context.DrawRenderers(cullingResults, ref drawingSettings, ref filteringSettings);
-                context.Submit(); // 每次 set camera 之后立即提交
-            }
-
-            csm.RevertMainCameraSettings(ref camera);
-
-            Profiler.EndSample();
-        }
+        // void ShadowCastingPass(ScriptableRenderContext context, Camera camera)
+        // {
+        //     Profiler.BeginSample("MyPieceOfCode");
+        //
+        //     // 获取光源信息
+        //     Light light = RenderSettings.sun;
+        //     Vector3 lightDir = light.transform.rotation * Vector3.forward;
+        //
+        //     // 更新 shadowmap 分割
+        //     csm.Update(camera, lightDir, csmSettings);
+        //     csmSettings.Set();
+        //
+        //     csm.SaveMainCameraSettings(ref camera);
+        //     for (int level = 0; level < 4; level++)
+        //     {
+        //         // 将相机移到光源方向
+        //         csm.ConfigCameraToShadowSpace(ref camera, lightDir, level, orthoDistance, shadowMapResolution);
+        //
+        //         // 设置阴影矩阵, 视锥分割参数
+        //         Matrix4x4 v = camera.worldToCameraMatrix;
+        //         Matrix4x4 p = GL.GetGPUProjectionMatrix(camera.projectionMatrix, false);
+        //         Shader.SetGlobalMatrix("_shadowVpMatrix" + level, p * v);
+        //         Shader.SetGlobalFloat("_orthoWidth" + level, csm.orthoWidths[level]);
+        //
+        //         CommandBuffer cmd = new CommandBuffer();
+        //         cmd.name = "shadowmap" + level;
+        //
+        //         // 绘制前准备
+        //         context.SetupCameraProperties(camera);
+        //         cmd.SetRenderTarget(shadowTextures[level]);
+        //         cmd.ClearRenderTarget(true, true, Color.clear);
+        //         context.ExecuteCommandBuffer(cmd);
+        //         cmd.Clear();
+        //
+        //         // 剔除
+        //         camera.TryGetCullingParameters(out var cullingParameters);
+        //         var cullingResults = context.Cull(ref cullingParameters);
+        //         // config settings
+        //         ShaderTagId shaderTagId = new ShaderTagId("depthonly");
+        //         SortingSettings sortingSettings = new SortingSettings(camera);
+        //         DrawingSettings drawingSettings = new DrawingSettings(shaderTagId, sortingSettings);
+        //         FilteringSettings filteringSettings = FilteringSettings.defaultValue;
+        //
+        //         // 绘制
+        //         context.DrawRenderers(cullingResults, ref drawingSettings, ref filteringSettings);
+        //         context.Submit(); // 每次 set camera 之后立即提交
+        //     }
+        //
+        //     csm.RevertMainCameraSettings(ref camera);
+        //
+        //     Profiler.EndSample();
+        // }
 
         // Gbuffer Pass
         void GbufferPass(ScriptableRenderContext context, Camera camera)

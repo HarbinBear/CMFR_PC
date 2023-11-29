@@ -80,6 +80,15 @@ namespace Framework.CMFR
             SetNameForPanel( panelBokeh , "Bokeh");
             SetUpToggleForPanel( panelBokeh , mCMFRModel.Bokeh_On );    
             
+            // eyeX
+            GameObject panelEyeX = Instantiate(SliderPanel);
+            SetNameForPanel( panelEyeX , "Eye X" );
+            SetUpSliderForPanel( panelEyeX , mCMFRModel.eyeX , 0.00f , 1.0f );
+            
+            // eyeY
+            GameObject panelEyeY = Instantiate(SliderPanel);
+            SetNameForPanel( panelEyeY , "Eye Y" );
+            SetUpSliderForPanel( panelEyeY , mCMFRModel.eyeY , 0.00f , 1.0f );
             
         }
 

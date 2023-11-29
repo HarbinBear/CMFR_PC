@@ -32,23 +32,23 @@ Shader "CMFR/CMFR_Pass"
 				float2 value;
 			};
 
-			// 复数相乘
-			Complex ComplexMul(Complex c1, Complex c2) 
-			{
-			  Complex result;
-			  result.value.x = c1.value.x * c2.value.x - c1.value.y * c2.value.y;
-			  result.value.y = c1.value.x * c2.value.y + c1.value.y * c2.value.x;
-			  return result;
-			}
-
-			// 复数相加
-			Complex ComplexAdd(Complex c1, Complex c2)
-			{
-			  Complex result;
-			  result.value.x = c1.value.x + c2.value.x;
-			  result.value.y = c1.value.y + c2.value.y;
-			  return result;
-			}
+			// // 复数相乘
+			// Complex ComplexMul(Complex c1, Complex c2) 
+			// {
+			//   Complex result;
+			//   result.value.x = c1.value.x * c2.value.x - c1.value.y * c2.value.y;
+			//   result.value.y = c1.value.x * c2.value.y + c1.value.y * c2.value.x;
+			//   return result;
+			// }
+			//
+			// // 复数相加
+			// Complex ComplexAdd(Complex c1, Complex c2)
+			// {
+			//   Complex result;
+			//   result.value.x = c1.value.x + c2.value.x;
+			//   result.value.y = c1.value.y + c2.value.y;
+			//   return result;
+			// }
 
 			
 			struct appdata
@@ -146,9 +146,24 @@ Shader "CMFR/CMFR_Pass"
 				float u,v;
 				x = ( x * 2 ) - 1 ;
 				y = ( y * 2 ) - 1 ;
+
+				_eyeX = ( _eyeX * 2 ) - 1 ;
+				_eyeY = ( _eyeY * 2 ) - 1 ;
+				
+				// --------- rect to square -----------
+				float signX, signY;
+				signX = x - _eyeX ;
+				signY = y - _eyeY ;
+				if( signX > 0 && signY > 0 )
+				{
+					x = ( x - _eyeX ) / ( 1 - _eyeX );
+					y = ( y - _eyeY ) / ( 1 - _eyeY );
+				}
+				//
+
+				
 				float xx = pow( x , 2 );
 				float yy = pow( y , 2 );
-
 
 
 				// elliplical Grid mapping
@@ -209,8 +224,7 @@ Shader "CMFR/CMFR_Pass"
 				{
 					
 				}
-
-
+				
 
 				// hyperbolic
 				// Spuare to Disk
@@ -255,6 +269,14 @@ Shader "CMFR/CMFR_Pass"
 					u *= sqrt(2);
 					v *= sqrt(2);
 				}
+
+				// ------- square to rect --------
+				if( signX > 0 && signY > 0 )
+				{
+					u = ( 1 - _eyeX ) * u + _eyeX ;
+					v = ( 1 - _eyeY ) * v + _eyeY ;
+				}
+				//
 				
 				u = ( u + 1 ) / 2 ;
 				v = ( v + 1 ) / 2 ;
