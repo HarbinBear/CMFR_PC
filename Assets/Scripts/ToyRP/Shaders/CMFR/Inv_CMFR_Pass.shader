@@ -91,7 +91,6 @@ Shader "CMFR/Inv_CMFR_Pass"
 				float u,v;
 				float2 tt = tc;
 
-				tt /= sqrt(2);
 				tt = tt * 2 ;      //  [ -1 , 1 ]
 
 				
@@ -106,6 +105,9 @@ Shader "CMFR/Inv_CMFR_Pass"
 					// return fixed4( tt.x , tt.y , 0 , 0 );
 				}
 				//
+
+				// 属于圆盘映射部分，应放在矩形-正方形映射里面。
+				tt /= sqrt(2);
 				
 				float xx = pow( tt.x , 2 );
 				float yy = pow( tt.y , 2 );

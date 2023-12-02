@@ -89,9 +89,9 @@ Shader "CMFR/CMFR_Pass"
 			{
 				// return tex2D( _GT1 , i.uv );
 				// return tex2D( _MainTex , i.uv );
-				if( _OutputMode == 3 || _OutputMode == 4  )
+				if( _OutputMode == 3 || _OutputMode == 4  ) 
 				{
-					_DebugMode = 1 ;
+					_DebugMode = 1 ;   // when show density
 				}
 				else
 				{
@@ -263,7 +263,7 @@ Shader "CMFR/CMFR_Pass"
 				}
 
 
-					
+				// 属于圆盘映射部分，应放在矩形-正方形映射里面。
 				if( _MappingStrategy > 0 )
 				{
 					u *= sqrt(2);
