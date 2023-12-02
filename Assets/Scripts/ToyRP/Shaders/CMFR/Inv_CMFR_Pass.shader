@@ -98,13 +98,24 @@ Shader "CMFR/Inv_CMFR_Pass"
 				_eyeY = ( _eyeY * 2 ) - 1 ;
 				
 				// --------- rect to square -----------
-				if( tt.x > 0 && tt.y > 0  )
+				if( tt.x > 0   )
 				{
 					tt.x = ( tt.x ) / ( 1 - _eyeX );
-					tt.y = ( tt.y ) / ( 1 - _eyeY );
-					// return fixed4( tt.x , tt.y , 0 , 0 );
 				}
-				//
+				else
+				{
+					tt.x = ( tt.x ) / ( _eyeX - ( -1 ) );
+				}
+
+				if( tt.y > 0   )
+				{
+					tt.y = ( tt.y ) / ( 1 - _eyeY );
+				}
+				else
+				{
+					tt.y = ( tt.y ) / ( _eyeY - ( -1 ) );
+				}
+				
 
 				// 属于圆盘映射部分，应放在矩形-正方形映射里面。
 				tt /= sqrt(2);
@@ -269,12 +280,22 @@ Shader "CMFR/Inv_CMFR_Pass"
 				} 
 
 				// ------- square to rect --------
-				if( tt.x > 0 && tt.y > 0 )
+				if( tt.x > 0 )
 				{
 					u = ( 1 - _eyeX ) * u ;
+				}
+				else
+				{
+					u = ( _eyeX - ( -1 ) ) * u ;
+				}
+
+				if( tt.y > 0 )
+				{
 					v = ( 1 - _eyeY ) * v  ;
-					// return fixed4( u , v , 0 , 0 );
-				
+				}
+				else
+				{
+					v = ( _eyeY - ( -1 ) ) * v  ;
 				}
 				
 

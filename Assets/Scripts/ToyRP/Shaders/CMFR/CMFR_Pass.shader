@@ -154,11 +154,27 @@ Shader "CMFR/CMFR_Pass"
 				float signX, signY;
 				signX = x - _eyeX ;
 				signY = y - _eyeY ;
-				if( signX > 0 && signY > 0 )
+				if( signX > 0 )
 				{
 					x = ( x - _eyeX ) / ( 1 - _eyeX );
-					y = ( y - _eyeY ) / ( 1 - _eyeY );
+					// y = ( y - _eyeY ) / ( 1 - _eyeY );
 				}
+				else
+				{
+					x = ( x - _eyeX ) / ( _eyeX - (-1) );
+				}
+				
+				if( signY > 0 )
+				{
+					y = ( y - _eyeY ) / ( 1 - _eyeY );
+					// y = ( y - _eyeY ) / ( 1 - _eyeY );
+				}
+				else
+				{
+					y = ( y - _eyeY ) / ( _eyeY - (-1) );
+				}
+
+				
 				//
 
 				
@@ -271,10 +287,22 @@ Shader "CMFR/CMFR_Pass"
 				}
 
 				// ------- square to rect --------
-				if( signX > 0 && signY > 0 )
+				if( signX > 0 )
 				{
 					u = ( 1 - _eyeX ) * u + _eyeX ;
+				}
+				else
+				{
+					u = ( _eyeX - (-1) ) * u + _eyeX ;
+				}
+
+				if( signY > 0 )
+				{
 					v = ( 1 - _eyeY ) * v + _eyeY ;
+				}
+				else
+				{
+					v = ( _eyeY - (-1) ) * v + _eyeY ;
 				}
 				//
 				
