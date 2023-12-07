@@ -22,6 +22,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 //
+
+using Framework;
+using Framework.CMFR;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -110,7 +113,23 @@ namespace Kino
 
         float CalculateFocusDistance()
         {
+            // use ICMFRModel
+            GameObject game = GameObject.Find("Game");
+            if (game != null)
+            {
+                Game gameComp = game.GetComponent<Game>() ;
+                IRenderSystem RenderSys = gameComp?.GetArchitecture().GetSystem<IRenderSystem>();
+                return RenderSys.GetModel<ICMFRModel>().focusDistance;
+            }
+            else
+            {
+                Debug.LogError("[ToyRenderPipeline] GameComp is null !");
+            }
+            
+            // use distance
             if (_pointOfFocus == null) return _focusDistance;
+            
+            // use point
             var cam = TargetCamera.transform;
             return Vector3.Dot(_pointOfFocus.position - cam.position, cam.forward);
         }
@@ -136,6 +155,7 @@ namespace Kino
         void SetUpShaderParameters(RenderTexture source)
         {
             var s1 = CalculateFocusDistance();
+            Debug.Log("[Bokeh] s1: " + s1 );
             var f = CalculateFocalLength();
             s1 = Mathf.Max(s1, f);
             _material.SetFloat("_Distance", s1);
@@ -206,6 +226,7 @@ namespace Kino
             var format = RenderTextureFormat.ARGBHalf;
 
             SetUpShaderParameters(source);
+            Debug.Log(  );
             _material.SetTexture("_CameraDepthTexture",depthTexture);
 
             #if UNITY_EDITOR

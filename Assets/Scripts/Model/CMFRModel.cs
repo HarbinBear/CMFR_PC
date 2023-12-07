@@ -49,6 +49,7 @@
         BindableProperty<float> validPercent { get;  }
         BindableProperty<float> sampleDensityWithNoise { get;  }
         BindableProperty<float> squelchedGridMappingBeta { get;  }
+        BindableProperty<float> focusDistance { get; set; }
         BindableProperty<int> mappingStrategy { get;  }
         BindableProperty<int> iApplyRFRMap1 { get;  }
         BindableProperty<int> iApplyRFRMap2 { get;  }
@@ -93,6 +94,10 @@
         public BindableProperty<float> sampleDensityWithNoise { get; } = new BindableProperty<float>()
         {
             Value = 1
+        };
+        public BindableProperty<float> focusDistance { get; set;  } = new BindableProperty<float>()
+        {
+            Value = 10
         };
         public BindableProperty<float> scaleRatio { get; } = new BindableProperty<float>()
         {

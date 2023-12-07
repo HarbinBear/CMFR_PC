@@ -595,6 +595,35 @@ namespace Framework.CMFR
             cmd.name = "Bokeh";
 
             Bokeh bokeh = camera.GetComponentInParent<Bokeh>();
+            
+            // by getpixel 
+            // Texture2D tempTex = new Texture2D(_gdepth_CMFR.width, _gdepth_CMFR.height, TextureFormat.RFloat, false);
+            // RenderTexture.active = _gdepth_CMFR;
+            // tempTex.ReadPixels( new Rect( 0, 0, tempTex.width , tempTex.height ) , 0 , 0 );
+            // tempTex.Apply();
+            // Color depthColor = tempTex.GetPixel( (int)RenderSys.GetModel<ICMFRModel>().eyeX,
+            //                                 (int)RenderSys.GetModel<ICMFRModel>().eyeY);
+            // // Debug.Log( depthColor.r );
+            
+            // by raycast
+            Ray ray = Camera.main.ScreenPointToRay( 
+    new Vector2( 
+            RenderSys.GetModel<ICMFRModel>().eyeX * _gdepth_CMFR.width ,
+            RenderSys.GetModel<ICMFRModel>().eyeY * _gdepth_CMFR.height 
+                )
+            );
+            RaycastHit hit;
+            if (Physics.Raycast(ray, out hit))
+            {
+                float depth = hit.distance;
+                
+                RenderSys.GetModel<ICMFRModel>().focusDistance.Value = depth;
+            }
+            else
+            {
+                RenderSys.GetModel<ICMFRModel>().focusDistance.Value = 100000;
+            }
+            Debug.Log( RenderSys.GetModel<ICMFRModel>().focusDistance.Value );
             if (bokeh == null) return; 
             if (RenderSys.GetModel<ICMFRModel>().TAA_On == true)
             {
