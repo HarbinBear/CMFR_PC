@@ -33953,8 +33953,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   pattern: 12
   patternScale: 1
-  activeSample: {x: 0.125, y: 0.2777778, z: -0.375, w: -0.055555552}
-  activeIndex: 4
+  activeSample: {x: 0, y: 0, z: 0, w: 0}
+  activeIndex: -2
 --- !u!114 &664993031
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -34079,7 +34079,7 @@ Camera:
   serializedVersion: 2
   m_ClearFlags: 1
   m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
-  m_projectionMatrixMode: 0
+  m_projectionMatrixMode: 1
   m_GateFitMode: 2
   m_FOVAxisMode: 0
   m_SensorSize: {x: 36, y: 24}
@@ -34118,8 +34118,8 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 664993027}
-  m_LocalRotation: {x: 0.110688224, y: -0.20827115, z: 0.023729501, w: 0.97149795}
-  m_LocalPosition: {x: -2.3, y: 6.12, z: 1.56}
+  m_LocalRotation: {x: 0.013535812, y: 0.95553076, z: -0.04441377, w: 0.29121342}
+  m_LocalPosition: {x: -11.634972, y: 1.518278, z: 11.374917}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

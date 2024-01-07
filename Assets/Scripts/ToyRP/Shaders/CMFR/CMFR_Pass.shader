@@ -31,25 +31,7 @@ Shader "CMFR/CMFR_Pass"
 			{
 				float2 value;
 			};
-
-			// // 复数相乘
-			// Complex ComplexMul(Complex c1, Complex c2) 
-			// {
-			//   Complex result;
-			//   result.value.x = c1.value.x * c2.value.x - c1.value.y * c2.value.y;
-			//   result.value.y = c1.value.x * c2.value.y + c1.value.y * c2.value.x;
-			//   return result;
-			// }
-			//
-			// // 复数相加
-			// Complex ComplexAdd(Complex c1, Complex c2)
-			// {
-			//   Complex result;
-			//   result.value.x = c1.value.x + c2.value.x;
-			//   result.value.y = c1.value.y + c2.value.y;
-			//   return result;
-			// }
-
+			
 			
 			struct appdata
 			{

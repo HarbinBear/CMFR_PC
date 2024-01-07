@@ -167,8 +167,15 @@ namespace UnityTemplateProjects
 
         void Update()
         {
-            // Exit Sample
+            // ScreenShot on P Key Down
+            if (IsPKeyPressed())
+            {
+                string filename = "Screenshot" + System.DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss") + ".png" ;
+                ScreenCapture.CaptureScreenshot( filename , 1);
+                Debug.Log( "已保存" + filename ) ;
+            }
 
+            // Exit Sample
             if (IsEscapePressed())
             {
                 Application.Quit();
@@ -296,6 +303,11 @@ namespace UnityTemplateProjects
 #else
             return Input.GetMouseButtonUp(1);
 #endif
+        }
+
+        bool IsPKeyPressed()
+        {
+            return Input.GetKeyDown(KeyCode.P);
         }
     }
 }

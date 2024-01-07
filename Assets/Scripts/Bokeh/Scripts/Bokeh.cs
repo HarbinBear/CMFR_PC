@@ -155,7 +155,7 @@ namespace Kino
         void SetUpShaderParameters(RenderTexture source)
         {
             var s1 = CalculateFocusDistance();
-            Debug.Log("[Bokeh] s1: " + s1 );
+            // Debug.Log("[Bokeh] s1: " + s1 );
             var f = CalculateFocalLength();
             s1 = Mathf.Max(s1, f);
             _material.SetFloat("_Distance", s1);
@@ -226,7 +226,7 @@ namespace Kino
             var format = RenderTextureFormat.ARGBHalf;
 
             SetUpShaderParameters(source);
-            Debug.Log(  );
+            // Debug.Log(  );
             _material.SetTexture("_CameraDepthTexture",depthTexture);
 
             #if UNITY_EDITOR

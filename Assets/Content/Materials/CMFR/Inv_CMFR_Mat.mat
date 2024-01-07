@@ -73,7 +73,7 @@ Material:
     - _GlossMapScale: 1
     - _Glossiness: 0.5
     - _GlossyReflections: 1
-    - _MappingStrategy: 4
+    - _MappingStrategy: 1
     - _Metallic: 0
     - _Metallic_global: 0.5
     - _Mode: 0
@@ -94,7 +94,7 @@ Material:
     - _fx: 0.2
     - _fy: 0.2
     - _iApplyLogMap2: 1
-    - _scaleRatio: 2.2
+    - _scaleRatio: 1
     - _validPercent: 0.78
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}

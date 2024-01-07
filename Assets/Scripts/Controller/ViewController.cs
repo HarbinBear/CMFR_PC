@@ -130,8 +130,11 @@ namespace Framework.CMFR
             {
                 property.Value = value;
                 value = (float) Math.Round(value, 3); 
-                valueText.text = value.ToString() ; 
-                if( property == mCMFRModel.sigma ) this.SendCommand<GBufferSizeChangeCommand>();
+                valueText.text = value.ToString() ;
+                if (property == mCMFRModel.sigma)
+                {
+                    this.SendCommand<GBufferSizeChangeCommand>();
+                }
             });
         }
 

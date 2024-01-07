@@ -198,6 +198,8 @@ namespace Framework.CMFR
 
         protected override void Render(ScriptableRenderContext context, Camera[] cameras)
         {
+            // Debug.Log("Time taken for this frame: " + Time.deltaTime);
+
             // 主相机
             Camera camera = cameras[0];
             
@@ -623,7 +625,7 @@ namespace Framework.CMFR
             {
                 RenderSys.GetModel<ICMFRModel>().focusDistance.Value = 100000;
             }
-            Debug.Log( RenderSys.GetModel<ICMFRModel>().focusDistance.Value );
+            // Debug.Log( RenderSys.GetModel<ICMFRModel>().focusDistance.Value );
             if (bokeh == null) return; 
             if (RenderSys.GetModel<ICMFRModel>().TAA_On == true)
             {
