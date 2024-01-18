@@ -162,5 +162,19 @@ namespace Framework.CMFR
         {
             return CMFRDemo.Interface;
         }
+        
+        void OnGUI()
+        {
+            OnDrawFoveationPointGUI();
+        }
+        
+        void OnDrawFoveationPointGUI()
+        {
+            Vector2 actualCoordinates = new Vector2(
+                mCMFRModel.eyeX * Screen.width,
+                (1.0f-mCMFRModel.eyeY) * Screen.height
+            );
+            GUI.DrawTexture(new Rect(actualCoordinates.x, actualCoordinates.y, 10, 10), Texture2D.whiteTexture);
+        }
     }
 }

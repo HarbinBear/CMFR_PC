@@ -118,7 +118,7 @@
 
         public BindableProperty<int> mappingStrategy { get; } = new BindableProperty<int>()
         {
-            Value = 4
+            Value = 1
         }; 
         public BindableProperty<int> outputTex { get; } = new BindableProperty<int>()
         {

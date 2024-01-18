@@ -82,12 +82,12 @@ public class VelocityBuffer : EffectBase
         timeScaleNextFrame = Time.timeScale;
     }
 
-    void OnPreRender()
+    public void OnPreRender()
     {
         EnsureDepthTexture(_camera);
     }
 
-    void OnPostRender()
+    public void OnPostRender()
     {
         EnsureArray(ref velocityBuffer, 2);
         EnsureArray(ref velocityNeighborMax, 2);

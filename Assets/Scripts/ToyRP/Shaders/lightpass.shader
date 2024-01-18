@@ -39,8 +39,12 @@ Shader "ToyRP/lightpass"
                 o.vertex = UnityObjectToClipPos(v.vertex);
                 o.uv = v.uv;
                 return o;
-            }           
+            }
 
+            float rand(float n){ 
+                return frac(sin(n) * 43758.5453123);
+            }
+            
             fixed4 frag (v2f i, out float depthOut : SV_Depth) : SV_Target
             {
                 float2 uv = i.uv;
@@ -49,6 +53,10 @@ Shader "ToyRP/lightpass"
 
                 // 从 Gbuffer 解码数据
                 float3 albedo = tex2D(_GT0, uv).rgb;
+                if( length(albedo) <= 0.001  )
+                {
+                    return float4( albedo , 1 );
+                }
                 float3 normal = tex2D(_GT1, uv).rgb * 2 - 1;
                 float2 motionVec = GT2.rg;
                 float roughness = GT2.b;
@@ -96,6 +104,15 @@ Shader "ToyRP/lightpass"
                 float mask = tex2D(_shadoMask, uv).r;
                 if(0.0000005<mask && mask<0.9999995) return float4(1, 0, 0, 1);*/
 
+                // [unroll(10000)]
+                // for(int i = 0 ; i < 100 ; i ++ )
+                // {
+                //     for(int j = 0 ; j < 100 ; j  ++ )
+                //     {
+                //         float3 haha = sin( 12.9898 + rand(uv.x * i ) ) * cos( 78.233 * rand (uv.y * i ) ) * 0.001;
+                //         color += haha  ;   
+                //     }
+                // }
                 return float4(color, 1);
             }
             ENDCG

@@ -26,6 +26,7 @@
 using Framework;
 using Framework.CMFR;
 using UnityEngine;
+using UnityEngine.Rendering;
 using UnityEngine.Serialization;
 
 namespace Kino
@@ -209,13 +210,13 @@ namespace Kino
             if (_fNumber < 0.1f) _fNumber = 0.1f;
         }
 
-        public void OnBokeh(RenderTexture source, RenderTexture depthTexture,  RenderTexture destination)
+        public void OnBokeh(RenderTexture source, RenderTexture depthTexture,  RenderTexture destination , CommandBuffer cmd )
         {
             // If the material hasn't been initialized because of system
             // incompatibility, just blit and return.
             if (_material == null)
             {
-                Graphics.Blit(source, destination);
+                cmd.Blit(source, destination);
                 // Try to disable itself if it's Player.
                 if (Application.isPlaying) enabled = false;
                 return;
@@ -234,7 +235,7 @@ namespace Kino
             // Focus range visualization
             if (_visualize)
             {
-                Graphics.Blit(source, destination, _material, 7);
+                cmd.Blit(source, destination, _material, 7);
                 return;
             }
 
@@ -243,25 +244,27 @@ namespace Kino
             // Pass #1 - Downsampling, prefiltering and CoC calculation
             var rt1 = RenderTexture.GetTemporary(width / 2, height / 2, 0, format);
             source.filterMode = FilterMode.Point;
-            Graphics.Blit(source, rt1, _material, 0);
+            cmd.Blit(source, rt1, _material, 0);
 
             // Pass #2 - Bokeh simulation
             var rt2 = RenderTexture.GetTemporary(width / 2, height / 2, 0, format);
             rt1.filterMode = FilterMode.Bilinear;
-            Graphics.Blit(rt1, rt2, _material, 1 + (int)_kernelSize);
+            cmd.Blit(rt1, rt2, _material, 1 + (int)_kernelSize);
 
             // Pass #3 - Additional blur
             rt2.filterMode = FilterMode.Bilinear;
-            Graphics.Blit(rt2, rt1, _material, 5);
+            cmd.Blit(rt2, rt1, _material, 5);
 
             // Pass #4 - Upsampling and composition
             _material.SetTexture("_BlurTex", rt1);
-            Graphics.Blit(source, destination, _material, 6);
+            cmd.Blit(source, destination, _material, 6);
 
             RenderTexture.ReleaseTemporary(rt1);
             RenderTexture.ReleaseTemporary(rt2);
         }
 
         #endregion
+        
+
     }
 }

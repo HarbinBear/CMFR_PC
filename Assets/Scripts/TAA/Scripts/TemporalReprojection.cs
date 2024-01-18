@@ -7,6 +7,7 @@
 #endif
 
 using UnityEngine;
+using UnityEngine.Rendering;
 
 [ExecuteInEditMode]
 [RequireComponent(typeof(Camera), typeof(FrustumJitter), typeof(VelocityBuffer))]
@@ -67,7 +68,7 @@ public class TemporalReprojection : EffectBase
         Clear();
     }
 
-    void Resolve(RenderTexture source, RenderTexture destination)
+    void Resolve(RenderTexture source, RenderTexture destination , CommandBuffer cmd)
     {
         EnsureArray(ref reprojectionBuffer, 2, 2);
         EnsureArray(ref reprojectionIndex, 2, initialValue: -1);
@@ -75,7 +76,7 @@ public class TemporalReprojection : EffectBase
         EnsureMaterial(ref reprojectionMaterial, reprojectionShader);
         if (reprojectionMaterial == null)
         {
-            Graphics.Blit(source, destination);
+            cmd.Blit(source, destination);
             return;
         }
 
@@ -159,18 +160,18 @@ public class TemporalReprojection : EffectBase
         }
     }
 
-    public void RenderTAA(RenderTexture source, RenderTexture destination)
+    public void RenderTAA(RenderTexture source, RenderTexture destination , CommandBuffer cmd )
     {
         if (destination != null && source.antiAliasing == destination.antiAliasing)// resolve without additional blit when not end of chain
         {
-            Resolve(source, destination);
+            Resolve(source, destination , cmd);
         }
         else
         {
             RenderTexture internalDestination = RenderTexture.GetTemporary(source.width, source.height, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Default, source.antiAliasing);
             {
-                Resolve(source, internalDestination);
-                Graphics.Blit(internalDestination, destination);
+                Resolve(source, internalDestination , cmd);
+                cmd.Blit(internalDestination, destination);
             }
             RenderTexture.ReleaseTemporary(internalDestination);
         }

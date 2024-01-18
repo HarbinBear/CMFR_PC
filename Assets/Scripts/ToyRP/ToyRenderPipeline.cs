@@ -185,14 +185,17 @@ namespace Framework.CMFR
             // _gdepth_CMFR.Release();
             foreach (var buffer in _gbuffers_CMFR)
             {
-                buffer.Release();
+                if(buffer) buffer.Release();
             }
+            if( lightPassTex ) lightPassTex.Release();
 
             // _gdepth_CMFR      = new RenderTexture(sigmaWidth, sigmaHeight, 0, RenderTextureFormat.RFloat     );
             _gbuffers_CMFR[0] = new RenderTexture(sigmaWidth, sigmaHeight, 0, RenderTextureFormat.ARGB32     );
             _gbuffers_CMFR[1] = new RenderTexture(sigmaWidth, sigmaHeight, 0, RenderTextureFormat.ARGB2101010);
             _gbuffers_CMFR[2] = new RenderTexture(sigmaWidth, sigmaHeight, 0, RenderTextureFormat.ARGB64     );
             _gbuffers_CMFR[3] = new RenderTexture(sigmaWidth, sigmaHeight, 0, RenderTextureFormat.ARGBFloat  );
+            
+            lightPassTex = new RenderTexture(sigmaWidth, sigmaHeight, 0, RenderTextureFormat.ARGBFloat);
         }
         
 
@@ -203,7 +206,7 @@ namespace Framework.CMFR
             // 主相机
             Camera camera = cameras[0];
             
-            if( _renderSys.GetModel<ICMFRModel>().FrustumJitter_On == true ) PreCullPass(context , camera);
+            if( RenderSys.GetModel<ICMFRModel>().FrustumJitter_On == true ) PreCullPass(context , camera);
 
 
             // 全局变量设置
@@ -283,6 +286,7 @@ namespace Framework.CMFR
 
             FinalPass(context, camera);
             
+            
             // ------------------------- Pass end -------------------------- //
 
             // skybox and Gizmos
@@ -292,9 +296,14 @@ namespace Framework.CMFR
                 context.DrawGizmos(camera, GizmoSubset.PreImageEffects);
                 context.DrawGizmos(camera, GizmoSubset.PostImageEffects);
             }
+            
+
 
             // 提交绘制命令
             context.Submit();
+            
+            
+
         }
 
 
@@ -582,8 +591,12 @@ namespace Framework.CMFR
             cmd.name = "TAA";
 
             TemporalReprojection taa = camera.GetComponentInParent<TemporalReprojection>();
+            VelocityBuffer velocityBuffer = camera.GetComponent<VelocityBuffer>();
             if (taa == null) return;
-            taa.RenderTAA( GetCurBuffer(),TAATex );         
+            
+            velocityBuffer.OnPreRender();
+            taa.RenderTAA( GetCurBuffer(),TAATex , cmd);         
+            velocityBuffer.OnPostRender();
             
             context.ExecuteCommandBuffer(cmd);
             context.Submit();
@@ -611,7 +624,8 @@ namespace Framework.CMFR
             Ray ray = Camera.main.ScreenPointToRay( 
     new Vector2( 
             RenderSys.GetModel<ICMFRModel>().eyeX * _gdepth_CMFR.width ,
-            RenderSys.GetModel<ICMFRModel>().eyeY * _gdepth_CMFR.height 
+                RenderSys.GetModel<ICMFRModel>().eyeY  * _gdepth_CMFR.height 
+                // ( 1.0f - RenderSys.GetModel<ICMFRModel>().eyeY ) * _gdepth_CMFR.height 
                 )
             );
             RaycastHit hit;
@@ -625,15 +639,15 @@ namespace Framework.CMFR
             {
                 RenderSys.GetModel<ICMFRModel>().focusDistance.Value = 100000;
             }
-            // Debug.Log( RenderSys.GetModel<ICMFRModel>().focusDistance.Value );
+            Debug.Log( RenderSys.GetModel<ICMFRModel>().focusDistance.Value );
             if (bokeh == null) return; 
             if (RenderSys.GetModel<ICMFRModel>().TAA_On == true)
             {
-                bokeh.OnBokeh( TAATex , _gdepth_CMFR  , BokehTex );
+                bokeh.OnBokeh( TAATex , _gdepth_CMFR  , BokehTex , cmd);
             }
             else
             {
-                bokeh.OnBokeh( GetCurBuffer() , _gdepth_CMFR ,  BokehTex );
+                bokeh.OnBokeh( GetCurBuffer() , _gdepth_CMFR ,  BokehTex , cmd );
              
             }
             
@@ -774,7 +788,8 @@ namespace Framework.CMFR
 
             return null;
         }
-        
+
+
     }
 
 }
