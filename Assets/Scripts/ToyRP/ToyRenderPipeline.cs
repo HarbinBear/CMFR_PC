@@ -639,7 +639,7 @@ namespace Framework.CMFR
             {
                 RenderSys.GetModel<ICMFRModel>().focusDistance.Value = 100000;
             }
-            Debug.Log( RenderSys.GetModel<ICMFRModel>().focusDistance.Value );
+            // Debug.Log( RenderSys.GetModel<ICMFRModel>().focusDistance.Value );
             if (bokeh == null) return; 
             if (RenderSys.GetModel<ICMFRModel>().TAA_On == true)
             {

@@ -132,7 +132,7 @@
         
         public BindableProperty<bool> TAA_On { get; } = new BindableProperty<bool>()
         {
-            Value = true
+            Value = false
         };       
         public BindableProperty<bool> Bokeh_On { get; } = new BindableProperty<bool>()
         {
@@ -140,7 +140,7 @@
         };    
         public BindableProperty<bool> FrustumJitter_On { get; } = new BindableProperty<bool>()
         {
-            Value = true
+            Value = false
         };
         
         protected override void OnInit()
