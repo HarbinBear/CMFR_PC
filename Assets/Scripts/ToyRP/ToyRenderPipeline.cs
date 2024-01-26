@@ -429,6 +429,7 @@ namespace Framework.CMFR
             Profiler.BeginSample("CMFR");
             CommandBuffer cmd = new CommandBuffer();
             cmd.name = "CMFR";
+            cmd.BeginSample("CMFR GPU");
 
             // SetCMFRMatParams( CMFR_Depth_Mat );
             SetCMFRMatParams( CMFR_Mat );
@@ -441,7 +442,7 @@ namespace Framework.CMFR
                 // _gbuffers[i].filterMode = FilterMode.Point;
                 cmd.Blit(_gbuffers[i], _gbuffers_CMFR[i], CMFR_Mat);
             }
-            
+            cmd.EndSample("CMFR GPU");
             context.ExecuteCommandBuffer(cmd);
             context.Submit();
 
@@ -462,16 +463,11 @@ namespace Framework.CMFR
             mat.SetInt("_OutputMode", (int)RenderSys.GetModel<ICMFRModel>().outputTex);
             
 
-            if (mat == CMFR_Mat)
+            if (mat == CMFR_Mat || mat == CMFR_Depth_Mat )
             {
                 mat.SetInt("_iApplyRFRMap1", RenderSys.GetModel<ICMFRModel>().iApplyRFRMap1);
             }
 
-            if (mat == CMFR_Depth_Mat)
-            {
-                mat.SetInt("_iApplyRFRMap1", RenderSys.GetModel<ICMFRModel>().iApplyRFRMap1);
-
-            }
             
             if (mat == Inv_CMFR_Mat)
             {
@@ -537,6 +533,7 @@ namespace Framework.CMFR
             // 使用 Blit  
             CommandBuffer cmd = new CommandBuffer();
             cmd.name = "lightpass";
+            cmd.BeginSample("Light Pass GPU");
 
             Material mat = new Material(Shader.Find("ToyRP/lightpass"));
             switch (RenderSys.GetModel<ICMFRModel>().outputTex)
@@ -553,6 +550,7 @@ namespace Framework.CMFR
                     break;
                 }
             }
+            cmd.EndSample("Light Pass GPU");
 
             context.ExecuteCommandBuffer(cmd);
 
