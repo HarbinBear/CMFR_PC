@@ -10,10 +10,6 @@ using UnityEngine.Profiling;
 
 namespace Framework.CMFR
 {
-    
-    
-
-
     public class ToyRenderPipeline : RenderPipeline
     {
 
@@ -67,7 +63,6 @@ namespace Framework.CMFR
         RenderTexture InvCMFRTex; // 存储 light pass 的结果
         RenderTexture TAATex; // 存储 light pass 的结果
         RenderTexture BokehTex; // 存储 light pass 的结果
-        RenderTexture hizBuffer; // hi-z buffer
 
         Matrix4x4 vpMatrix;
         Matrix4x4 vpMatrixInv;
@@ -105,7 +100,7 @@ namespace Framework.CMFR
             if (game != null)
             {
                 Game gameComp = game.GetComponent<Game>() ;
-                RenderSys = gameComp?.GetArchitecture().GetSystem<IRenderSystem>();
+                RenderSys = CMFRDemo.Interface.GetSystem<IRenderSystem>();
             }
             else
             {
@@ -144,13 +139,7 @@ namespace Framework.CMFR
 
             tempDepthRT2 =
                 new RenderTexture(_gdepth_CMFR.width, _gdepth_CMFR.height, 0, RenderTextureFormat.RFloat);
-
-            // Hi-z buffer
-            int hSize = Mathf.NextPowerOfTwo(Mathf.Max(Screen.width, Screen.height)); // 大小必须是 2 的次幂
-            hizBuffer = new RenderTexture(hSize, hSize, 0, RenderTextureFormat.RHalf);
-            hizBuffer.autoGenerateMips = false;
-            hizBuffer.useMipMap = true;
-            hizBuffer.filterMode = FilterMode.Point;
+            
 
             // 给纹理 ID 赋值
             _gdepthID = _gdepth;
@@ -219,7 +208,6 @@ namespace Framework.CMFR
 
             //  gbuffer 
             Shader.SetGlobalTexture("_gdepth", GDepth);
-            Shader.SetGlobalTexture("_hizBuffer", hizBuffer);
             for (int i = 0; i < 4; i++)
                 Shader.SetGlobalTexture("_GT" + i, GBuffers[i]);
 
@@ -253,23 +241,9 @@ namespace Framework.CMFR
             bool isEditor = Handles.ShouldRenderGizmos();
 
             // ------------------------ 管线各个 Pass ------------------------ //
-
             
-            ClusterLightingPass(context, camera);
-
-            // ShadowCastingPass(context, camera);
-
             GbufferPass(context, camera);
 
-            // InstanceDrawPass(context, Camera.main);
-            
-            // only generate for main camera
-            if (!isEditor)
-            {
-                HizPass(context, camera);
-                vpMatrixPrev = vpMatrix;
-            }
-            
             if( RenderSys.GetModel<ICMFRModel>().outputTex != 0 ) 
                 CMFRPass(context , camera );
             
@@ -316,79 +290,6 @@ namespace Framework.CMFR
             }
         }
         
-
-        void ClusterLightingPass(ScriptableRenderContext context, Camera camera)
-        {
-            // 裁剪光源
-            camera.TryGetCullingParameters(out var cullingParameters);
-            var cullingResults = context.Cull(ref cullingParameters);
-
-            // 更新光源
-            clusterLight.UpdateLightBuffer(cullingResults.visibleLights.ToArray());
-
-            // 划分 cluster
-            clusterLight.ClusterGenerate(camera);
-
-            // 分配光源
-            clusterLight.LightAssign();
-
-            // 传递参数
-            clusterLight.SetShaderParameters();
-        }
-
-        // 阴影贴图 pass
-        // void ShadowCastingPass(ScriptableRenderContext context, Camera camera)
-        // {
-        //     Profiler.BeginSample("MyPieceOfCode");
-        //
-        //     // 获取光源信息
-        //     Light light = RenderSettings.sun;
-        //     Vector3 lightDir = light.transform.rotation * Vector3.forward;
-        //
-        //     // 更新 shadowmap 分割
-        //     csm.Update(camera, lightDir, csmSettings);
-        //     csmSettings.Set();
-        //
-        //     csm.SaveMainCameraSettings(ref camera);
-        //     for (int level = 0; level < 4; level++)
-        //     {
-        //         // 将相机移到光源方向
-        //         csm.ConfigCameraToShadowSpace(ref camera, lightDir, level, orthoDistance, shadowMapResolution);
-        //
-        //         // 设置阴影矩阵, 视锥分割参数
-        //         Matrix4x4 v = camera.worldToCameraMatrix;
-        //         Matrix4x4 p = GL.GetGPUProjectionMatrix(camera.projectionMatrix, false);
-        //         Shader.SetGlobalMatrix("_shadowVpMatrix" + level, p * v);
-        //         Shader.SetGlobalFloat("_orthoWidth" + level, csm.orthoWidths[level]);
-        //
-        //         CommandBuffer cmd = new CommandBuffer();
-        //         cmd.name = "shadowmap" + level;
-        //
-        //         // 绘制前准备
-        //         context.SetupCameraProperties(camera);
-        //         cmd.SetRenderTarget(shadowTextures[level]);
-        //         cmd.ClearRenderTarget(true, true, Color.clear);
-        //         context.ExecuteCommandBuffer(cmd);
-        //         cmd.Clear();
-        //
-        //         // 剔除
-        //         camera.TryGetCullingParameters(out var cullingParameters);
-        //         var cullingResults = context.Cull(ref cullingParameters);
-        //         // config settings
-        //         ShaderTagId shaderTagId = new ShaderTagId("depthonly");
-        //         SortingSettings sortingSettings = new SortingSettings(camera);
-        //         DrawingSettings drawingSettings = new DrawingSettings(shaderTagId, sortingSettings);
-        //         FilteringSettings filteringSettings = FilteringSettings.defaultValue;
-        //
-        //         // 绘制
-        //         context.DrawRenderers(cullingResults, ref drawingSettings, ref filteringSettings);
-        //         context.Submit(); // 每次 set camera 之后立即提交
-        //     }
-        //
-        //     csm.RevertMainCameraSettings(ref camera);
-        //
-        //     Profiler.EndSample();
-        // }
 
         // Gbuffer Pass
         void GbufferPass(ScriptableRenderContext context, Camera camera)
@@ -497,40 +398,6 @@ namespace Framework.CMFR
             }
         }
 
-
-        // 阴影计算 pass : 输出阴影强度 texture
-        // void ShadowMappingPass(ScriptableRenderContext context, Camera camera)
-        // {
-        //     CommandBuffer cmd = new CommandBuffer();
-        //     cmd.name = "shadowmappingpass";
-        //
-        //     RenderTexture tempTex1 = RenderTexture.GetTemporary(Screen.width / 4, Screen.height / 4, 0,
-        //         RenderTextureFormat.R8, RenderTextureReadWrite.Linear);
-        //     RenderTexture tempTex2 = RenderTexture.GetTemporary(Screen.width / 4, Screen.height / 4, 0,
-        //         RenderTextureFormat.R8, RenderTextureReadWrite.Linear);
-        //     RenderTexture tempTex3 = RenderTexture.GetTemporary(Screen.width, Screen.height, 0, RenderTextureFormat.R8,
-        //         RenderTextureReadWrite.Linear);
-        //
-        //     if (csmSettings.usingShadowMask)
-        //     {
-        //         // 生成 Mask, 模糊 Mask
-        //         cmd.Blit(GBufferID[0], tempTex1, new Material(Shader.Find("ToyRP/preshadowmappingpass")));
-        //         cmd.Blit(tempTex1, tempTex2, new Material(Shader.Find("ToyRP/blurNx1")));
-        //         cmd.Blit(tempTex2, shadowMask, new Material(Shader.Find("ToyRP/blur1xN")));
-        //     }
-        //
-        //     // 生成阴影, 模糊阴影
-        //     cmd.Blit(GBufferID[0], tempTex3, new Material(Shader.Find("ToyRP/shadowmappingpass")));
-        //     cmd.Blit(tempTex3, shadowStrength, new Material(Shader.Find("ToyRP/blurNxN")));
-        //
-        //     RenderTexture.ReleaseTemporary(tempTex1);
-        //     RenderTexture.ReleaseTemporary(tempTex2);
-        //     RenderTexture.ReleaseTemporary(tempTex3);
-        //
-        //     context.ExecuteCommandBuffer(cmd);
-        //     context.Submit();
-        // }
-
         // 光照 Pass : 计算 PBR 光照并且存储到 lightPassTex 纹理
         void LightPass(ScriptableRenderContext context, Camera camera)
         {
@@ -610,16 +477,7 @@ namespace Framework.CMFR
             cmd.name = "Bokeh";
 
             Bokeh bokeh = camera.GetComponentInParent<Bokeh>();
-            
-            // by getpixel 
-            // Texture2D tempTex = new Texture2D(_gdepth_CMFR.width, _gdepth_CMFR.height, TextureFormat.RFloat, false);
-            // RenderTexture.active = _gdepth_CMFR;
-            // tempTex.ReadPixels( new Rect( 0, 0, tempTex.width , tempTex.height ) , 0 , 0 );
-            // tempTex.Apply();
-            // Color depthColor = tempTex.GetPixel( (int)RenderSys.GetModel<ICMFRModel>().eyeX,
-            //                                 (int)RenderSys.GetModel<ICMFRModel>().eyeY);
-            // // Debug.Log( depthColor.r );
-            
+
             // by raycast
             Ray ray = Camera.main.ScreenPointToRay( 
     new Vector2( 
@@ -689,66 +547,6 @@ namespace Framework.CMFR
             context.ExecuteCommandBuffer(cmd);
             context.Submit();
         }
-        
-
-        // 绘制 instanceData 列表中的所有 instance
-        // void InstanceDrawPass(ScriptableRenderContext context, Camera camera)
-        // {
-        //     CommandBuffer cmd = new CommandBuffer();
-        //     cmd.name = "instance gbuffer";
-        //     cmd.SetRenderTarget(_gbufferID, _gdepthID);
-        //
-        //     Matrix4x4 viewMatrix = camera.worldToCameraMatrix;
-        //     Matrix4x4 projMatrix = GL.GetGPUProjectionMatrix(camera.projectionMatrix, false);
-        //     Matrix4x4 vp = projMatrix * viewMatrix;
-        //
-        //     // 绘制 instance
-        //     ComputeShader cullingCs = FindComputeShader("InstanceCulling");
-        //     for (int i = 0; i < instanceDatas.Length; i++)
-        //     {
-        //         InstanceDrawer.Draw(instanceDatas[i], Camera.main, cullingCs, vpMatrixPrev, hizBuffer, ref cmd);
-        //     }
-        //
-        //     context.ExecuteCommandBuffer(cmd);
-        //     context.Submit();
-        // }
-
-        // hiz pass
-        void HizPass(ScriptableRenderContext context, Camera camera)
-        {
-            CommandBuffer cmd = new CommandBuffer();
-            cmd.name = "hizpass";
-
-            // 创建纹理
-            int size = hizBuffer.width;
-            int nMips = (int)Mathf.Log(size, 2);
-            RenderTexture[] mips = new RenderTexture[nMips];
-            for (int i = 0; i < mips.Length; i++)
-            {
-                int mSize = size / (int)Mathf.Pow(2, i);
-                mips[i] = RenderTexture.GetTemporary(mSize, mSize, 0, RenderTextureFormat.RHalf,
-                    RenderTextureReadWrite.Linear);
-                mips[i].filterMode = FilterMode.Point;
-            }
-
-            // 生成 mipmap
-            Material mat = new Material(Shader.Find("ToyRP/hizBlit"));
-            cmd.Blit(_gdepth, mips[0]);
-            for (int i = 1; i < mips.Length; i++)
-            {
-                cmd.Blit(mips[i - 1], mips[i], mat);
-            }
-
-            // 拷贝到 hizBuffer 的各个 mip
-            for (int i = 0; i < mips.Length; i++)
-            {
-                cmd.CopyTexture(mips[i], 0, 0, hizBuffer, 0, i);
-                RenderTexture.ReleaseTemporary(mips[i]);
-            }
-
-            context.ExecuteCommandBuffer(cmd);
-            context.Submit();
-        }
 
 
         RenderTexture GetCurBuffer()
@@ -775,20 +573,6 @@ namespace Framework.CMFR
             
             return largeLightPassTex;
         }
-        
-        
-        static ComputeShader FindComputeShader(string shaderName)
-        {
-            ComputeShader[] css = Resources.FindObjectsOfTypeAll(typeof(ComputeShader)) as ComputeShader[];
-            for (int i = 0; i < css.Length; i++)
-            {
-                if (css[i].name == shaderName)
-                    return css[i];
-            }
-
-            return null;
-        }
-
 
     }
 
