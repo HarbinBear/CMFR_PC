@@ -489,9 +489,13 @@ namespace Framework.CMFR
             RaycastHit hit;
             if (Physics.Raycast(ray, out hit))
             {
-                float depth = hit.distance;
+                Vector3 hit_ViewSpace = Camera.main.WorldToViewportPoint(hit.point);
+
+                float depth = hit_ViewSpace.z;
+
+                float trueDepth = depth + Camera.main.nearClipPlane;
                 
-                RenderSys.GetModel<ICMFRModel>().focusDistance.Value = depth;
+                RenderSys.GetModel<ICMFRModel>().focusDistance.Value = trueDepth;
             }
             else
             {
@@ -501,11 +505,11 @@ namespace Framework.CMFR
             if (bokeh == null) return; 
             if (RenderSys.GetModel<ICMFRModel>().TAA_On == true)
             {
-                bokeh.OnBokeh( TAATex , _gdepth_CMFR  , BokehTex , cmd);
+                bokeh.OnBokeh( TAATex , _gdepth  , BokehTex , cmd);
             }
             else
             {
-                bokeh.OnBokeh( GetCurBuffer() , _gdepth_CMFR ,  BokehTex , cmd );
+                bokeh.OnBokeh( GetCurBuffer() , _gdepth ,  BokehTex , cmd );
              
             }
             
