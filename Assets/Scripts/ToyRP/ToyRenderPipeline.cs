@@ -481,9 +481,8 @@ namespace Framework.CMFR
             // by raycast
             Ray ray = Camera.main.ScreenPointToRay( 
     new Vector2( 
-            RenderSys.GetModel<ICMFRModel>().eyeX * _gdepth_CMFR.width ,
-                RenderSys.GetModel<ICMFRModel>().eyeY  * _gdepth_CMFR.height 
-                // ( 1.0f - RenderSys.GetModel<ICMFRModel>().eyeY ) * _gdepth_CMFR.height 
+            RenderSys.GetModel<ICMFRModel>().eyeX * _gdepth.width ,
+            RenderSys.GetModel<ICMFRModel>().eyeY * _gdepth.height 
                 )
             );
             RaycastHit hit;
@@ -492,10 +491,8 @@ namespace Framework.CMFR
                 Vector3 hit_ViewSpace = Camera.main.WorldToViewportPoint(hit.point);
 
                 float depth = hit_ViewSpace.z;
-
-                float trueDepth = depth + Camera.main.nearClipPlane;
                 
-                RenderSys.GetModel<ICMFRModel>().focusDistance.Value = trueDepth;
+                RenderSys.GetModel<ICMFRModel>().focusDistance.Value = depth;
             }
             else
             {

@@ -64,7 +64,7 @@ Material:
     - _GlossMapScale: 1
     - _Glossiness: 0.5
     - _GlossyReflections: 1
-    - _MappingStrategy: 1
+    - _MappingStrategy: 0
     - _Metallic: 0
     - _Metallic_global: 0.5
     - _Mode: 0
@@ -80,7 +80,7 @@ Material:
     - _Use_Normal_Map: 1
     - _ZWrite: 1
     - _eyeX: 0.5
-    - _eyeY: 0.5
+    - _eyeY: 0.71015745
     - _fx: 0.2
     - _fy: 0.2
     - _iApplyLogMap1: 1
